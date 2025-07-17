@@ -198,6 +198,11 @@ def main():
 
     if can_do_incremental:
         print("=== PERFORMING INCREMENTAL UPDATE ===")
+
+        # Add progress tracking for incremental updates
+        print("DEBUG: About to call update_progress for incremental")
+        update_progress(0, 1, "Fetching incremental data...", "incremental")
+        print("DEBUG: Called update_progress for incremental successfully")
         
         # Fetch only new data
         good_dfs, bad_tickers = fetch_incremental_data(
@@ -205,6 +210,9 @@ def main():
         )
         
         print(f"Incremental fetch: {len(good_dfs)} symbols updated, {len(bad_tickers)} failed")
+        print("DEBUG: About to call final update_progress for incremental")
+        update_progress(1, 1, f"Incremental update complete: {len(good_dfs)} symbols", "complete")
+        print("DEBUG: Called final update_progress for incremental successfully")
         
         if good_dfs:
             # Combine new data
