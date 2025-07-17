@@ -6,6 +6,8 @@ import time  # Add this import
 
 def update_progress(current_batch, total_batches, batch_info="", status="processing", start_time=None):
     """Write progress info to a JSON file that Streamlit can read"""
+    print(f"DEBUG: update_progress called - batch {current_batch}/{total_batches}")
+    
     progress_data = {
         "current_batch": current_batch,
         "total_batches": total_batches,
@@ -23,10 +25,12 @@ def update_progress(current_batch, total_batches, batch_info="", status="process
         progress_data["estimated_remaining"] = f"{int(remaining//60)}:{int(remaining%60):02d}"
     
     try:
+        print(f"DEBUG: Attempting to write progress file")
         with open("etl_progress.json", "w") as f:
             json.dump(progress_data, f)
-    except:
-        pass  # Don't break ETL if progress file fails
+        print(f"DEBUG: Progress file written successfully")
+    except Exception as e:
+        print(f"DEBUG: Failed to write progress file: {e}")
 
 def get_last_update_info():
     """Check existing data and determine what needs updating"""
@@ -236,7 +240,9 @@ def main():
         start_time = datetime.now()
         
         # Initialize progress
+        print("DEBUG: About to call update_progress")
         update_progress(0, total_batches, "Starting data fetch...", "starting", start_time)
+        print("DEBUG: Called update_progress successfully")
             
         for batch_num, i in enumerate(range(0, len(tickers), batch_size), 1):
             batch = tickers[i:i+batch_size]
