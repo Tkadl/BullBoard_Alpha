@@ -1759,6 +1759,7 @@ def main():
             status_text = st.empty()
             details_text = st.empty()
             time_text = st.empty()
+            debug_text = st.empty()  # Add debug info
         
         # Start ETL in background and monitor progress
         import etl
@@ -1774,13 +1775,20 @@ def main():
         etl_thread = threading.Thread(target=run_etl)
         etl_thread.start()
         
+        loop_count = 0
         # Monitor progress while ETL runs
         while etl_thread.is_alive():
+            loop_count += 1
             try:
-                # Read progress file
-                if os.path.exists("etl_progress.json"):
+                # Check if progress file exists
+                file_exists = os.path.exists("etl_progress.json")
+                debug_text.write(f"Debug: Loop {loop_count}, File exists: {file_exists}")
+                
+                if file_exists:
                     with open("etl_progress.json", "r") as f:
                         progress_data = json.load(f)
+                    
+                    debug_text.write(f"Debug: Progress data loaded - Batch {progress_data.get('current_batch', 0)}")
                     
                     # Update progress bar
                     progress_bar.progress(progress_data["percentage"] / 100)
@@ -1800,8 +1808,10 @@ def main():
                 
                 else:
                     status_text.markdown("**Status:** Initializing...")
+                    debug_text.write(f"Debug: No progress file found yet")
                 
-            except (FileNotFoundError, json.JSONDecodeError):
+            except Exception as e:
+                debug_text.write(f"Debug: Error reading progress - {str(e)}")
                 status_text.markdown("**Status:** Preparing data fetch...")
             
             # Wait a bit before checking again
