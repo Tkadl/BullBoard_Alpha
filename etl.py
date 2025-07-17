@@ -223,7 +223,7 @@ def main():
             print("No new data fetched - using existing data")
             df = existing_df
 
-       else:
+    else:
         print("=== PERFORMING FULL REFRESH ===")
         
         print(f"Fetching data for {len(tickers)} symbols...")
@@ -237,7 +237,7 @@ def main():
         
         # Initialize progress
         update_progress(0, total_batches, "Starting data fetch...", "starting", start_time)
-        
+            
         for batch_num, i in enumerate(range(0, len(tickers), batch_size), 1):
             batch = tickers[i:i+batch_size]
             batch_info = f"Fetching {len(batch)} symbols: {batch[0]} to {batch[-1]}"
