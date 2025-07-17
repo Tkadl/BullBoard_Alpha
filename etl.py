@@ -149,6 +149,7 @@ def main():
     
     start_date = "2024-01-01"
     end_date = datetime.today().strftime("%Y-%m-%d")
+    print(f"DEBUG: End date being used: {end_date}")  # Add this line
     min_days_needed = 65
     yield_thresh = 0.01          # 1% daily yield
     risk_thresh = 0.06           # Custom risk score
