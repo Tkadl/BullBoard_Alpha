@@ -5,8 +5,6 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 import datetime
-import os
-import threading
 TRANSFORMERS_AVAILABLE = False
 pipeline = None
 
@@ -1751,85 +1749,11 @@ def main():
         
         # ETL Pipeline Button
     if st.button("🔄 Refresh Data", key="etl_button"):
-        # Create progress display containers
-        progress_container = st.container()
-        
-        with progress_container:
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            details_text = st.empty()
-            time_text = st.empty()
-            debug_text = st.empty()  # Add debug info
-        
-        # Start ETL in background and monitor progress
-        import etl
-        import json
-        import time
-        import threading
-        
-        # Function to run ETL in separate thread
-        def run_etl():
+        with st.spinner("🔄 Fetching latest market data... This may take 1-2 minutes."):
+            import etl
             etl.main()
-        
-        # Start ETL thread
-        etl_thread = threading.Thread(target=run_etl)
-        etl_thread.start()
-        
-        loop_count = 0
-        # Monitor progress while ETL runs
-        while etl_thread.is_alive():
-            loop_count += 1
-            try:
-                # Check if progress file exists
-                file_exists = os.path.exists("etl_progress.json")
-                debug_text.write(f"Debug: Loop {loop_count}, File exists: {file_exists}")
-                
-                if file_exists:
-                    with open("etl_progress.json", "r") as f:
-                        progress_data = json.load(f)
-                    
-                    debug_text.write(f"Debug: Progress data loaded - Batch {progress_data.get('current_batch', 0)}")
-                    
-                    # Update progress bar
-                    progress_bar.progress(progress_data["percentage"] / 100)
-                    
-                    # Update status text
-                    status_text.markdown(f"**Status:** {progress_data['status'].title()}")
-                    
-                    # Update details
-                    if progress_data["batch_info"]:
-                        details_text.markdown(f"**Current:** {progress_data['batch_info']}")
-                    
-                    # Update progress text
-                    batch_text = f"Batch {progress_data['current_batch']}/{progress_data['total_batches']} ({progress_data['percentage']}%)"
-                    if "estimated_remaining" in progress_data:
-                        batch_text += f" • Est. remaining: {progress_data['estimated_remaining']}"
-                    time_text.markdown(f"**Progress:** {batch_text}")
-                
-                else:
-                    status_text.markdown("**Status:** Initializing...")
-                    debug_text.write(f"Debug: No progress file found yet")
-                
-            except Exception as e:
-                debug_text.write(f"Debug: Error reading progress - {str(e)}")
-                status_text.markdown("**Status:** Preparing data fetch...")
-            
-            # Wait a bit before checking again
-            time.sleep(1)
-        
-        # Wait for thread to complete
-        etl_thread.join()
-        
-        # Clean up progress file
-        try:
-            if os.path.exists("etl_progress.json"):
-                os.remove("etl_progress.json")
-        except:
-            pass
-        
-        # Clear progress display and show success
-        progress_container.empty()
-        st.success("Data updated successfully!")
+    
+        st.success("✅ Data updated successfully!")
         st.rerun()
 
      # Force Refresh UI Button
