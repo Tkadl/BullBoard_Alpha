@@ -148,8 +148,10 @@ def main():
     print(f"DEBUG: Last 10 tickers: {tickers[-10:]}")
     
     start_date = "2024-01-01"
-    end_date = datetime.today().strftime("%Y-%m-%d")
-    print(f"DEBUG: End date being used: {end_date}")  # Add this line
+    print(f"DEBUG: datetime.today() = {datetime.today()}")
+    print(f"DEBUG: date.today() = {date.today()}")
+    end_date = date.today().strftime("%Y-%m-%d")  # Use date.today() instead
+    print(f"DEBUG: End date being used: {end_date}")
     min_days_needed = 65
     yield_thresh = 0.01          # 1% daily yield
     risk_thresh = 0.06           # Custom risk score
