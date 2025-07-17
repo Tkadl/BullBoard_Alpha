@@ -223,7 +223,7 @@ def main():
             print("No new data fetched - using existing data")
             df = existing_df
 
-   else:
+       else:
         print("=== PERFORMING FULL REFRESH ===")
         
         print(f"Fetching data for {len(tickers)} symbols...")
