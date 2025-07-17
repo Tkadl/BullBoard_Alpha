@@ -4,6 +4,30 @@ import numpy as np
 from datetime import datetime, date
 import time  # Add this import
 
+def update_progress(current_batch, total_batches, batch_info="", status="processing", start_time=None):
+    """Write progress info to a JSON file that Streamlit can read"""
+    progress_data = {
+        "current_batch": current_batch,
+        "total_batches": total_batches,
+        "percentage": round((current_batch / total_batches) * 100, 1) if total_batches > 0 else 0,
+        "batch_info": batch_info,
+        "status": status,
+        "timestamp": datetime.now().strftime("%H:%M:%S")
+    }
+    
+    # Add time estimates if start_time provided
+    if start_time and current_batch > 0:
+        elapsed = (datetime.now() - start_time).total_seconds()
+        estimated_total = (elapsed / current_batch) * total_batches
+        remaining = max(0, estimated_total - elapsed)
+        progress_data["estimated_remaining"] = f"{int(remaining//60)}:{int(remaining%60):02d}"
+    
+    try:
+        with open("etl_progress.json", "w") as f:
+            json.dump(progress_data, f)
+    except:
+        pass  # Don't break ETL if progress file fails
+
 def get_last_update_info():
     """Check existing data and determine what needs updating"""
     try:
@@ -199,19 +223,28 @@ def main():
             print("No new data fetched - using existing data")
             df = existing_df
 
-    else:
+   else:
         print("=== PERFORMING FULL REFRESH ===")
         
         print(f"Fetching data for {len(tickers)} symbols...")
         
         good_dfs = []
         bad_tickers = []
-    
+
         # Download data in batches with progress tracking
         total_batches = (len(tickers) + batch_size - 1) // batch_size
+        start_time = datetime.now()
+        
+        # Initialize progress
+        update_progress(0, total_batches, "Starting data fetch...", "starting", start_time)
         
         for batch_num, i in enumerate(range(0, len(tickers), batch_size), 1):
             batch = tickers[i:i+batch_size]
+            batch_info = f"Fetching {len(batch)} symbols: {batch[0]} to {batch[-1]}"
+            
+            # Update progress before processing batch
+            update_progress(batch_num-1, total_batches, batch_info, "processing", start_time)
+            
             print(f"Processing batch {batch_num}/{total_batches} ({len(batch)} symbols)...")
             
             try:
@@ -253,15 +286,24 @@ def main():
                 bad_tickers.extend(batch)
                 continue
                 
+            # Update progress after processing batch
+            success_count = len(good_dfs)
+            fail_count = len(bad_tickers)
+            batch_info = f"Completed: {success_count} successful, {fail_count} failed"
+            update_progress(batch_num, total_batches, batch_info, "processing", start_time)
+            
             # Add delay between batches to be respectful to the API
             if batch_num < total_batches:
                 time.sleep(delay_between_batches)
-    
+
+        # Final progress update
+        update_progress(total_batches, total_batches, f"Complete! {len(good_dfs)} stocks loaded", "complete", start_time)
+        
         print(f"Successfully fetched: {len(good_dfs)} symbols")
         print(f"Failed to fetch: {len(bad_tickers)} symbols")
         if bad_tickers:
             print(f"Failed symbols: {bad_tickers[:10]}{'...' if len(bad_tickers) > 10 else ''}")
-    
+
         if good_dfs:
             df = pd.concat(good_dfs, ignore_index=True)
             df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
