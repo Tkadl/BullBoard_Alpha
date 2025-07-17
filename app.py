@@ -1750,77 +1750,77 @@ def main():
         st.markdown("### 🎛️ Controls")
         
         # ETL Pipeline Button
-       if st.button("🔄 Refresh Data", key="etl_button"):
-            # Create progress display containers
-            progress_container = st.container()
-            
-            with progress_container:
-                progress_bar = st.progress(0)
-                status_text = st.empty()
-                details_text = st.empty()
-                time_text = st.empty()
-            
-            # Start ETL in background and monitor progress
-            import etl
-            import json
-            import time
-            import threading
-            
-            # Function to run ETL in separate thread
-            def run_etl():
-                etl.main()
-            
-            # Start ETL thread
-            etl_thread = threading.Thread(target=run_etl)
-            etl_thread.start()
-            
-            # Monitor progress while ETL runs
-            while etl_thread.is_alive():
-                try:
-                    # Read progress file
-                    if os.path.exists("etl_progress.json"):
-                        with open("etl_progress.json", "r") as f:
-                            progress_data = json.load(f)
-                        
-                        # Update progress bar
-                        progress_bar.progress(progress_data["percentage"] / 100)
-                        
-                        # Update status text
-                        status_text.markdown(f"**Status:** {progress_data['status'].title()}")
-                        
-                        # Update details
-                        if progress_data["batch_info"]:
-                            details_text.markdown(f"**Current:** {progress_data['batch_info']}")
-                        
-                        # Update progress text
-                        batch_text = f"Batch {progress_data['current_batch']}/{progress_data['total_batches']} ({progress_data['percentage']}%)"
-                        if "estimated_remaining" in progress_data:
-                            batch_text += f" • Est. remaining: {progress_data['estimated_remaining']}"
-                        time_text.markdown(f"**Progress:** {batch_text}")
-                    
-                    else:
-                        status_text.markdown("**Status:** Initializing...")
-                    
-                except (FileNotFoundError, json.JSONDecodeError):
-                    status_text.markdown("**Status:** Preparing data fetch...")
-                
-                # Wait a bit before checking again
-                time.sleep(1)
-            
-            # Wait for thread to complete
-            etl_thread.join()
-            
-            # Clean up progress file
+    if st.button("🔄 Refresh Data", key="etl_button"):
+        # Create progress display containers
+        progress_container = st.container()
+        
+        with progress_container:
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            details_text = st.empty()
+            time_text = st.empty()
+        
+        # Start ETL in background and monitor progress
+        import etl
+        import json
+        import time
+        import threading
+        
+        # Function to run ETL in separate thread
+        def run_etl():
+            etl.main()
+        
+        # Start ETL thread
+        etl_thread = threading.Thread(target=run_etl)
+        etl_thread.start()
+        
+        # Monitor progress while ETL runs
+        while etl_thread.is_alive():
             try:
+                # Read progress file
                 if os.path.exists("etl_progress.json"):
-                    os.remove("etl_progress.json")
-            except:
-                pass
+                    with open("etl_progress.json", "r") as f:
+                        progress_data = json.load(f)
+                    
+                    # Update progress bar
+                    progress_bar.progress(progress_data["percentage"] / 100)
+                    
+                    # Update status text
+                    status_text.markdown(f"**Status:** {progress_data['status'].title()}")
+                    
+                    # Update details
+                    if progress_data["batch_info"]:
+                        details_text.markdown(f"**Current:** {progress_data['batch_info']}")
+                    
+                    # Update progress text
+                    batch_text = f"Batch {progress_data['current_batch']}/{progress_data['total_batches']} ({progress_data['percentage']}%)"
+                    if "estimated_remaining" in progress_data:
+                        batch_text += f" • Est. remaining: {progress_data['estimated_remaining']}"
+                    time_text.markdown(f"**Progress:** {batch_text}")
+                
+                else:
+                    status_text.markdown("**Status:** Initializing...")
+                
+            except (FileNotFoundError, json.JSONDecodeError):
+                status_text.markdown("**Status:** Preparing data fetch...")
             
-            # Clear progress display and show success
-            progress_container.empty()
-            st.success("Data updated successfully!")
-            st.rerun()
+            # Wait a bit before checking again
+            time.sleep(1)
+        
+        # Wait for thread to complete
+        etl_thread.join()
+        
+        # Clean up progress file
+        try:
+            if os.path.exists("etl_progress.json"):
+                os.remove("etl_progress.json")
+        except:
+            pass
+        
+        # Clear progress display and show success
+        progress_container.empty()
+        st.success("Data updated successfully!")
+        st.rerun()
 
      # Force Refresh UI Button
         if st.button("🔄 Force Refresh UI", key="force_refresh_ui"):
