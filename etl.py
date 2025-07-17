@@ -4,34 +4,6 @@ import numpy as np
 from datetime import datetime, date
 import time  # Add this import
 
-def update_progress(current_batch, total_batches, batch_info="", status="processing", start_time=None):
-    """Write progress info to a JSON file that Streamlit can read"""
-    print(f"DEBUG: update_progress called - batch {current_batch}/{total_batches}")
-    
-    progress_data = {
-        "current_batch": current_batch,
-        "total_batches": total_batches,
-        "percentage": round((current_batch / total_batches) * 100, 1) if total_batches > 0 else 0,
-        "batch_info": batch_info,
-        "status": status,
-        "timestamp": datetime.now().strftime("%H:%M:%S")
-    }
-    
-    # Add time estimates if start_time provided
-    if start_time and current_batch > 0:
-        elapsed = (datetime.now() - start_time).total_seconds()
-        estimated_total = (elapsed / current_batch) * total_batches
-        remaining = max(0, estimated_total - elapsed)
-        progress_data["estimated_remaining"] = f"{int(remaining//60)}:{int(remaining%60):02d}"
-    
-    try:
-        print(f"DEBUG: Attempting to write progress file")
-        with open("etl_progress.json", "w") as f:
-            json.dump(progress_data, f)
-        print(f"DEBUG: Progress file written successfully")
-    except Exception as e:
-        print(f"DEBUG: Failed to write progress file: {e}")
-
 def get_last_update_info():
     """Check existing data and determine what needs updating"""
     try:
@@ -198,11 +170,6 @@ def main():
 
     if can_do_incremental:
         print("=== PERFORMING INCREMENTAL UPDATE ===")
-
-        # Add progress tracking for incremental updates
-        print("DEBUG: About to call update_progress for incremental")
-        update_progress(0, 1, "Fetching incremental data...", "incremental")
-        print("DEBUG: Called update_progress for incremental successfully")
         
         # Fetch only new data
         good_dfs, bad_tickers = fetch_incremental_data(
@@ -210,9 +177,6 @@ def main():
         )
         
         print(f"Incremental fetch: {len(good_dfs)} symbols updated, {len(bad_tickers)} failed")
-        print("DEBUG: About to call final update_progress for incremental")
-        update_progress(1, 1, f"Incremental update complete: {len(good_dfs)} symbols", "complete")
-        print("DEBUG: Called final update_progress for incremental successfully")
         
         if good_dfs:
             # Combine new data
@@ -247,10 +211,6 @@ def main():
         total_batches = (len(tickers) + batch_size - 1) // batch_size
         start_time = datetime.now()
         
-        # Initialize progress
-        print("DEBUG: About to call update_progress")
-        update_progress(0, total_batches, "Starting data fetch...", "starting", start_time)
-        print("DEBUG: Called update_progress successfully")
             
         for batch_num, i in enumerate(range(0, len(tickers), batch_size), 1):
             batch = tickers[i:i+batch_size]
