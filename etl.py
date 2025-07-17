@@ -2,6 +2,7 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from datetime import datetime, date
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import time  # Add this import
 
 def get_last_update_info():
@@ -135,6 +136,53 @@ def get_sp500_symbols():
     print(f"Loaded {len(sp500_symbols)} S&P 500 symbols")
     return sp500_symbols
 
+def fetch_batch_parallel(batch, start_date, end_date, min_days_needed, batch_id):
+    """Fetch a single batch of tickers in parallel"""
+    print(f"Starting batch {batch_id} with {len(batch)} symbols...")
+    
+    good_dfs = []
+    bad_tickers = []
+    
+    try:
+        raw = yf.download(
+            tickers=" ".join(batch),
+            start=start_date,
+            end=end_date,
+            group_by='ticker',
+            auto_adjust=True,
+            progress=False,
+            threads=True
+        )
+        
+        if len(batch) == 1:
+            ticker = batch[0]
+            temp = raw.copy()
+            if temp.empty or len(temp) < min_days_needed:
+                bad_tickers.append(ticker)
+            else:
+                temp['symbol'] = ticker
+                temp['Date'] = temp.index
+                good_dfs.append(temp.reset_index(drop=True))
+        else:
+            for ticker in batch:
+                try:
+                    temp = raw[ticker].copy()
+                    if temp.empty or len(temp) < min_days_needed:
+                        bad_tickers.append(ticker)
+                    else:
+                        temp['symbol'] = ticker
+                        temp['Date'] = temp.index
+                        good_dfs.append(temp.reset_index(drop=True))
+                except KeyError:
+                    bad_tickers.append(ticker)
+                    
+    except Exception as e:
+        print(f"Error in batch {batch_id}: {e}")
+        bad_tickers.extend(batch)
+    
+    print(f"Completed batch {batch_id}: {len(good_dfs)} success, {len(bad_tickers)} failed")
+    return good_dfs, bad_tickers
+
 def main():
     print("=== ETL MAIN FUNCTION STARTED ===")
     print("=== ETL MAIN FUNCTION STARTED ===")
@@ -202,67 +250,52 @@ def main():
     else:
         print("=== PERFORMING FULL REFRESH ===")
         
-        print(f"Fetching data for {len(tickers)} symbols...")
+        print(f"Fetching data for {len(tickers)} symbols using parallel processing...")
         
-        good_dfs = []
-        bad_tickers = []
-
-        # Download data in batches with progress tracking
-        total_batches = (len(tickers) + batch_size - 1) // batch_size
-        
-        for batch_num, i in enumerate(range(0, len(tickers), batch_size), 1):
+        # Create batches
+        batches = []
+        for i in range(0, len(tickers), batch_size):
             batch = tickers[i:i+batch_size]
-            print(f"Processing batch {batch_num}/{total_batches} ({len(batch)} symbols)...")
+            batches.append(batch)
+        
+        total_batches = len(batches)
+        print(f"Created {total_batches} batches, processing with parallel threads...")
+        
+        all_good_dfs = []
+        all_bad_tickers = []
+        
+        # Process batches in parallel
+        max_workers = min(6, total_batches)  # Limit concurrent downloads to avoid rate limits
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all batch jobs
+            future_to_batch = {
+                executor.submit(fetch_batch_parallel, batch, start_date, end_date, min_days_needed, i+1): i+1 
+                for i, batch in enumerate(batches)
+            }
             
-            try:
-                raw = yf.download(
-                    tickers=" ".join(batch),
-                    start=start_date,
-                    end=end_date,
-                    group_by='ticker',
-                    auto_adjust=True,
-                    progress=False,
-                    threads=True
-                )
-                
-                if len(batch) == 1:
-                    ticker = batch[0]
-                    temp = raw.copy()
-                    if temp.empty or len(temp) < min_days_needed:
-                        bad_tickers.append(ticker)
-                        continue
-                    temp['symbol'] = ticker
-                    temp['Date'] = temp.index
-                    good_dfs.append(temp.reset_index(drop=True))
-                else:
-                    for ticker in batch:
-                        try:
-                            temp = raw[ticker].copy()
-                            if temp.empty or len(temp) < min_days_needed:
-                                bad_tickers.append(ticker)
-                                continue
-                            temp['symbol'] = ticker
-                            temp['Date'] = temp.index
-                            good_dfs.append(temp.reset_index(drop=True))
-                        except KeyError:
-                            bad_tickers.append(ticker)
-                            continue
-                            
-            except Exception as e:
-                print(f"Error in batch {batch_num}: {e}")
-                bad_tickers.extend(batch)
-                continue
-                
-            if delay_between_batches > 0:
-                time.sleep(delay_between_batches)
+            # Collect results as they complete
+            completed = 0
+            for future in as_completed(future_to_batch):
+                batch_id = future_to_batch[future]
+                try:
+                    good_dfs, bad_tickers = future.result()
+                    all_good_dfs.extend(good_dfs)
+                    all_bad_tickers.extend(bad_tickers)
+                    completed += 1
+                    print(f"Progress: {completed}/{total_batches} batches completed")
+                except Exception as e:
+                    print(f"Batch {batch_id} generated an exception: {e}")
+                    completed += 1
 
-        print(f"Successfully fetched: {len(good_dfs)} symbols")
-        print(f"Failed to fetch: {len(bad_tickers)} symbols")
-        if bad_tickers:
-            print(f"Failed symbols: {bad_tickers[:10]}{'...' if len(bad_tickers) > 10 else ''}")
+        print(f"Parallel processing complete!")
+        print(f"Successfully fetched: {len(all_good_dfs)} symbols")
+        print(f"Failed to fetch: {len(all_bad_tickers)} symbols")
+        if all_bad_tickers:
+            print(f"Failed symbols: {all_bad_tickers[:10]}{'...' if len(all_bad_tickers) > 10 else ''}")
 
-        if good_dfs:
-            df = pd.concat(good_dfs, ignore_index=True)
+        if all_good_dfs:
+            df = pd.concat(all_good_dfs, ignore_index=True)
             df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
         else:
             print("No data fetched — check your internet connection and ticker list.")
