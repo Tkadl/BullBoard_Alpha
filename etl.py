@@ -199,75 +199,75 @@ def main():
             print("No new data fetched - using existing data")
             df = existing_df
 
-        else:
-            print("=== PERFORMING FULL REFRESH ===")
-            
-            print(f"Fetching data for {len(tickers)} symbols...")
-            
-            good_dfs = []
-            bad_tickers = []
+    else:
+        print("=== PERFORMING FULL REFRESH ===")
+        
+        print(f"Fetching data for {len(tickers)} symbols...")
+        
+        good_dfs = []
+        bad_tickers = []
     
-            # Download data in batches with progress tracking
-            total_batches = (len(tickers) + batch_size - 1) // batch_size
+        # Download data in batches with progress tracking
+        total_batches = (len(tickers) + batch_size - 1) // batch_size
+        
+        for batch_num, i in enumerate(range(0, len(tickers), batch_size), 1):
+            batch = tickers[i:i+batch_size]
+            print(f"Processing batch {batch_num}/{total_batches} ({len(batch)} symbols)...")
             
-            for batch_num, i in enumerate(range(0, len(tickers), batch_size), 1):
-                batch = tickers[i:i+batch_size]
-                print(f"Processing batch {batch_num}/{total_batches} ({len(batch)} symbols)...")
+            try:
+                raw = yf.download(
+                    tickers=" ".join(batch),
+                    start=start_date,
+                    end=end_date,
+                    group_by='ticker',
+                    auto_adjust=True,
+                    progress=False,
+                    threads=True
+                )
                 
-                try:
-                    raw = yf.download(
-                        tickers=" ".join(batch),
-                        start=start_date,
-                        end=end_date,
-                        group_by='ticker',
-                        auto_adjust=True,
-                        progress=False,
-                        threads=True
-                    )
-                    
-                    if len(batch) == 1:
-                        ticker = batch[0]
-                        temp = raw.copy()
-                        if temp.empty or len(temp) < min_days_needed:
-                            bad_tickers.append(ticker)
-                            continue
-                        temp['symbol'] = ticker
-                        temp['Date'] = temp.index
-                        good_dfs.append(temp.reset_index(drop=True))
-                    else:
-                        for ticker in batch:
-                            try:
-                                temp = raw[ticker].copy()
-                                if temp.empty or len(temp) < min_days_needed:
-                                    bad_tickers.append(ticker)
-                                    continue
-                                temp['symbol'] = ticker
-                                temp['Date'] = temp.index
-                                good_dfs.append(temp.reset_index(drop=True))
-                            except KeyError:
+                if len(batch) == 1:
+                    ticker = batch[0]
+                    temp = raw.copy()
+                    if temp.empty or len(temp) < min_days_needed:
+                        bad_tickers.append(ticker)
+                        continue
+                    temp['symbol'] = ticker
+                    temp['Date'] = temp.index
+                    good_dfs.append(temp.reset_index(drop=True))
+                else:
+                    for ticker in batch:
+                        try:
+                            temp = raw[ticker].copy()
+                            if temp.empty or len(temp) < min_days_needed:
                                 bad_tickers.append(ticker)
                                 continue
-                                
-                except Exception as e:
-                    print(f"Error in batch {batch_num}: {e}")
-                    bad_tickers.extend(batch)
-                    continue
-                    
-                # Add delay between batches to be respectful to the API
-                if batch_num < total_batches:
-                    time.sleep(delay_between_batches)
+                            temp['symbol'] = ticker
+                            temp['Date'] = temp.index
+                            good_dfs.append(temp.reset_index(drop=True))
+                        except KeyError:
+                            bad_tickers.append(ticker)
+                            continue
+                            
+            except Exception as e:
+                print(f"Error in batch {batch_num}: {e}")
+                bad_tickers.extend(batch)
+                continue
+                
+            # Add delay between batches to be respectful to the API
+            if batch_num < total_batches:
+                time.sleep(delay_between_batches)
     
-            print(f"Successfully fetched: {len(good_dfs)} symbols")
-            print(f"Failed to fetch: {len(bad_tickers)} symbols")
-            if bad_tickers:
-                print(f"Failed symbols: {bad_tickers[:10]}{'...' if len(bad_tickers) > 10 else ''}")
+        print(f"Successfully fetched: {len(good_dfs)} symbols")
+        print(f"Failed to fetch: {len(bad_tickers)} symbols")
+        if bad_tickers:
+            print(f"Failed symbols: {bad_tickers[:10]}{'...' if len(bad_tickers) > 10 else ''}")
     
-            if good_dfs:
-                df = pd.concat(good_dfs, ignore_index=True)
-                df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
-            else:
-                print("No data fetched — check your internet connection and ticker list.")
-                return
+        if good_dfs:
+            df = pd.concat(good_dfs, ignore_index=True)
+            df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
+        else:
+            print("No data fetched — check your internet connection and ticker list.")
+            return
         # TIMESTAMP DATA DOWNLOAD
         download_time = datetime.now()
         df['download_time'] = download_time.strftime('%Y-%m-%d %H:%M')
