@@ -15,7 +15,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-# Custom CSS for modern styling
+# Custom CSS styling
 st.markdown("""
 <style>
     /* Import Google Fonts */
@@ -1679,7 +1679,7 @@ def create_user_friendly_stock_selection(unique_symbols):
     if browse_option == "📊 Popular Stocks (Top 50)":
         st.markdown("**Most Popular S&P 500 Stocks:**")
         
-        # Popular stocks (you can customize this list)
+        # Popular stocks
         popular_stocks = [
             'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'BRK-B', 'UNH', 'LLY',
             'V', 'JNJ', 'XOM', 'JPM', 'PG', 'MA', 'HD', 'CVX', 'ABBV', 'BAC',
