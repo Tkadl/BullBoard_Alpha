@@ -215,9 +215,7 @@ def main():
         for batch_num, i in enumerate(range(0, len(tickers), batch_size), 1):
             batch = tickers[i:i+batch_size]
             batch_info = f"Fetching {len(batch)} symbols: {batch[0]} to {batch[-1]}"
-            
-            # Update progress before processing batch
-            update_progress(batch_num-1, total_batches, batch_info, "processing", start_time)
+      
             
             print(f"Processing batch {batch_num}/{total_batches} ({len(batch)} symbols)...")
             
