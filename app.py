@@ -1809,14 +1809,21 @@ def main():
         st.info("💡 Sophisticated insights without AI dependencies")
     
     # Load and validate data
-    try:
-        df = pd.read_csv("latest_results.csv", parse_dates=["Date"])
-    except Exception as e:
-        st.error("Failed to load data. Please refresh the data first.")
-        st.stop()
+    @st.cache_data
+    def load_and_validate_data():
+        """Cache the main data loading to avoid repeated CSV reads"""
+        try:
+            df = pd.read_csv("latest_results.csv", parse_dates=["Date"])
+            if df.empty or 'symbol' not in df.columns:
+                return None
+            return df
+        except Exception:
+            return None
     
-    if df.empty or 'symbol' not in df.columns:
-        st.error("No valid data found. Please refresh the data.")
+    # Load and validate data with caching
+    df = load_and_validate_data()
+    if df is None:
+        st.error("Failed to load data. Please refresh the data first.")
         st.stop()
     
    # Data info section with improved metric cards
@@ -1852,7 +1859,12 @@ def main():
    # Stock Selection section
     st.markdown('<div class="section-header"><span class="section-icon">🎯</span><h2>Stock Selection</h2></div>', unsafe_allow_html=True)
 
-    unique_symbols = sorted(df['symbol'].unique())
+    @st.cache_data
+    def get_processed_symbols(_df):
+        """Cache symbol processing"""
+        return sorted(_df['symbol'].unique())
+    
+    unique_symbols = get_processed_symbols(df)
     selected_symbols = create_user_friendly_stock_selection(unique_symbols)
     
     # Filter data based on selection
@@ -1881,25 +1893,32 @@ def main():
         st.warning("No data available for selected stocks and date range.")
         st.stop()
     
-    # Generate summary statistics
-    summary = (
-        filtered_df
-        .groupby("symbol")
-        .agg(
-            period_start=("Date", "min"),
-            period_end=("Date", "max"),
-            period_days=("Date", "count"),
-            avg_close=("Close", "mean"),
-            avg_daily_return=("daily_return", "mean"),
-            total_return=("Close", lambda x: (x.iloc[-1] / x.iloc[0]) - 1 if len(x) > 1 and x.iloc[0] != 0 else np.nan),
-            volatility_21=("volatility_21", "mean"),
-            avg_rolling_yield_21=("rolling_yield_21", "mean"),
-            avg_sharpe_21=("sharpe_21", "mean"),
-            avg_max_drawdown_63=("max_drawdown_63", "mean"),
-            avg_custom_risk_score=("custom_risk_score", "mean"),
+    @st.cache_data
+    def calculate_summary_statistics(_filtered_df, selected_symbols_hash, date_hash):
+        """Cache expensive summary calculations"""
+        return (
+            _filtered_df
+            .groupby("symbol")
+            .agg(
+                period_start=("Date", "min"),
+                period_end=("Date", "max"),
+                period_days=("Date", "count"),
+                avg_close=("Close", "mean"),
+                avg_daily_return=("daily_return", "mean"),
+                total_return=("Close", lambda x: (x.iloc[-1] / x.iloc[0]) - 1 if len(x) > 1 and x.iloc[0] != 0 else np.nan),
+                volatility_21=("volatility_21", "mean"),
+                avg_rolling_yield_21=("rolling_yield_21", "mean"),
+                avg_sharpe_21=("sharpe_21", "mean"),
+                avg_max_drawdown_63=("max_drawdown_63", "mean"),
+                avg_custom_risk_score=("custom_risk_score", "mean"),
+            )
+            .reset_index()
         )
-        .reset_index()
-    )
+    
+    # Generate summary statistics with caching
+    symbols_hash = hash(str(sorted(selected_symbols))) if selected_symbols else 0
+    date_hash = hash(str(date_range)) if 'date_range' in locals() else 0
+    summary = calculate_summary_statistics(filtered_df, symbols_hash, date_hash)
 
     # Portfolio Overview
     if len(selected_symbols) > 1:
