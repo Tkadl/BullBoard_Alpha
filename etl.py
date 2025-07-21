@@ -216,21 +216,11 @@ def get_sp500_symbols():
 
 def main():
     print("=== ETL MAIN FUNCTION STARTED ===")
-    print("=== ETL MAIN FUNCTION STARTED ===")
-    print("=== ETL MAIN FUNCTION STARTED ===")
     
     # === USER CONFIGURATION ===
-    tickers = get_sp500_symbols()  # Use dynamic S&P 500 list
-    # DEBUG: Let's see what we're actually getting
-    print(f"DEBUG: Total tickers to fetch: {len(tickers)}")
-    print(f"DEBUG: First 10 tickers: {tickers[:10]}")
-    print(f"DEBUG: Last 10 tickers: {tickers[-10:]}")
-    
+    tickers = get_sp500_symbols()  # Use dynamic S&P 500 list    
     start_date = "2024-01-01"
-    print(f"DEBUG: datetime.today() = {datetime.today()}")
-    print(f"DEBUG: date.today() = {date.today()}")
     end_date = date.today().strftime("%Y-%m-%d")  # Use date.today() instead
-    print(f"DEBUG: End date being used: {end_date}")
     min_days_needed = 65
     yield_thresh = 0.01          # 1% daily yield
     risk_thresh = 0.06           # Custom risk score
