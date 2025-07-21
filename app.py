@@ -1693,6 +1693,7 @@ def create_user_friendly_stock_selection(unique_symbols):
         default_stocks = ['AAPL', 'MSFT', 'GOOGL']
         available_defaults = [s for s in default_stocks if s in unique_symbols]
         selected = available_defaults[:3] if available_defaults else unique_symbols[:3]
+        selected_symbols = selected
 
 def main():
     create_header()
