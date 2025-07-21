@@ -261,9 +261,6 @@ def main():
             # Add delay between batches to be respectful to the API
             if batch_num < total_batches:
                 time.sleep(delay_between_batches)
-
-        # Final progress update
-        update_progress(total_batches, total_batches, f"Complete! {len(good_dfs)} stocks loaded", "complete", start_time)
         
         print(f"Successfully fetched: {len(good_dfs)} symbols")
         print(f"Failed to fetch: {len(bad_tickers)} symbols")
