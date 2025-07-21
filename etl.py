@@ -257,12 +257,6 @@ def main():
                 print(f"Error in batch {batch_num}: {e}")
                 bad_tickers.extend(batch)
                 continue
-                
-            # Update progress after processing batch
-            success_count = len(good_dfs)
-            fail_count = len(bad_tickers)
-            batch_info = f"Completed: {success_count} successful, {fail_count} failed"
-            update_progress(batch_num, total_batches, batch_info, "processing", start_time)
             
             # Add delay between batches to be respectful to the API
             if batch_num < total_batches:
