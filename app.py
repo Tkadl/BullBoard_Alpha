@@ -1686,14 +1686,13 @@ def create_user_friendly_stock_selection(unique_symbols):
                             st.button(f"✅ {symbol}", disabled=True, key=f"all_added_{symbol}")
     
     # ---- Portfolio selection always returns a list of stocks ----
-    if st.session_state.stock_basket:
-        selected = st.session_state.stock_basket
+    if st.session_state.stock_basket and len(st.session_state.stock_basket) > 0:
+        selected_symbols = st.session_state.stock_basket
     else:
-        # If basket empty, use some defaults
+        # Provide safe fallback if no stocks are in the basket
         default_stocks = ['AAPL', 'MSFT', 'GOOGL']
         available_defaults = [s for s in default_stocks if s in unique_symbols]
-        selected = available_defaults[:3] if available_defaults else unique_symbols[:3]
-        selected_symbols = selected
+        selected_symbols = available_defaults[:3] if available_defaults else unique_symbols[:3]
 
 def main():
     create_header()
