@@ -1774,16 +1774,12 @@ def create_user_friendly_stock_selection(unique_symbols):
 def main():
     create_header()
     
-    # Sidebar for controls
-    with st.sidebar:
-        st.markdown("### 🎛️ Controls")
         
         # ETL Pipeline Button
     if st.button("🔄 Refresh Data", key="etl_button"):
         with st.spinner("🔄 Fetching latest market data... This may take 1-2 minutes."):
             import etl
             etl.main()
-    
         st.success("✅ Data updated successfully!")
         st.rerun()
 
