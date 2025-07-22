@@ -1586,7 +1586,7 @@ def create_user_friendly_stock_selection(unique_symbols):
                 "⚡ Energy": ['XOM', 'CVX', 'COP', 'NEE', 'DUK'],
                 "🏭 Industrial": ['BA', 'CAT', 'GE', 'HON', 'MMM', 'UPS'],
                 "💰 Dividends": ['JNJ', 'PG', 'KO', 'PEP', 'MCD', 'WMT']
-            }
+                }
         
         
         # Create columns with medium gap for better spacing
