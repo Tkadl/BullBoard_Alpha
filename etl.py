@@ -215,10 +215,13 @@ def get_sp500_symbols():
     return sp500_symbols
 
 def main():
+    import os
     print("=== ETL MAIN FUNCTION STARTED ===")
-    
-    # === USER CONFIGURATION ===
-    tickers = get_sp500_symbols()  # Use dynamic S&P 500 list    
+    print("=== DEBUG MODE: testing with minimal, slow, and verbose ETL ===")
+    # === DEBUG OVERRIDE ===
+    tickers = ['AAPL', 'MSFT', 'GOOGL']  # Pick just 3 mainstream tickers
+    batch_size = 1                      # Slowest batch
+    delay_between_batches = 5            # 5 seconds between batches 
     start_date = "2024-01-01"
     end_date = date.today().strftime("%Y-%m-%d")  # Use date.today() instead
     min_days_needed = 65
@@ -374,8 +377,30 @@ def main():
     df = validate_data_quality(df)
     
     # Save summary table for Streamlit app
-    df.to_csv("latest_results.csv", index=False)
-    print(f"Data saved to latest_results.csv with {len(df)} total records for {df['symbol'].nunique()} unique symbols")
+print("\n=== DEBUG SUMMARY BEFORE SAVE ===")
+if 'df' in locals():
+    sample_df = df
+elif 'combined_df' in locals():
+    sample_df = combined_df
+else:
+    print("No dataframe to show!")
+    sample_df = None
+
+if sample_df is not None:
+    print(f"Rows to be saved: {len(sample_df)}")
+    print(f"Unique symbols (if available): {sample_df['symbol'].nunique() if 'symbol' in sample_df.columns else 'N/A'}")
+    print("Sample rows:")
+    print(sample_df.head())
+else:
+    print("No data will be saved!")
+
+# Now try to save, and confirm file size:
+output_path = "latest_results.csv"
+try:
+    sample_df.to_csv(output_path, index=False)
+    print(f"✅ Data saved to: {output_path}. Size: {os.path.getsize(output_path)} bytes")
+except Exception as e:
+    print(f"❌ Failed to save: {e}")
 
 if __name__ == "__main__":
     main()
