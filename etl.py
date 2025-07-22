@@ -2,7 +2,7 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from datetime import datetime, date
-import time
+import time  # Add this import
 
 def validate_data_quality(df, min_days_needed=65):
     """Basic data validation and anomaly detection"""
@@ -187,6 +187,7 @@ def fetch_incremental_data(tickers, last_date, end_date, min_days_needed, batch_
 
 def get_sp500_symbols():
     """Get complete S&P 500 symbols list"""
+    print("DEBUG: get_sp500_symbols() function called!")  # Add this line
     sp500_symbols = [
         'A', 'AAL', 'AAP', 'AAPL', 'ABBV', 'ABC', 'ABT', 'ACN', 'ADBE', 'ADI', 'ADM', 'ADP', 'ADSK', 'AEE', 'AEP', 'AES', 'AFL', 'AIG', 'AIZ', 'AJG', 'AKAM', 'ALB', 'ALGN', 'ALK', 'ALL', 'ALLE', 'AMAT', 'AMCR', 'AMD', 'AME', 'AMGN', 'AMP', 'AMT', 'AMZN', 'ANET', 'ANSS', 'AON', 'AOS', 'APA', 'APD', 'APH', 'APTV', 'ARE', 'ATO', 'AVB', 'AVGO', 'AVY', 'AWK', 'AXP', 'AZO',
         'BA', 'BAC', 'BALL', 'BAX', 'BBWI', 'BBY', 'BDX', 'BEN', 'BF-B', 'BIIB', 'BIO', 'BK', 'BKNG', 'BKR', 'BLK', 'BMY', 'BR', 'BRK-B', 'BRO', 'BSX', 'BWA',
@@ -362,6 +363,12 @@ def main():
         .apply(lambda x: (np.max(x) - np.min(x)) / np.max(x) if len(x) > 0 and np.max(x) != 0 else 0, raw=False)\
         .reset_index(0, drop=True)
     df['custom_risk_score'] = df['volatility_21'] * 0.7 + df['max_drawdown_63'] * 0.3
+
+    # Get each stock's latest analytics
+    latest = df.sort_values('Date').groupby('symbol').tail(1)
+    latest = latest[['symbol', 'Date', 'custom_risk_score', 'rolling_yield_21', 'sharpe_21', 'volatility_21', 'max_drawdown_63']].copy()
+    latest = latest.sort_values('custom_risk_score', ascending=False)
+    latest.reset_index(drop=True, inplace=True)
 
     # Data quality validation before saving
     df = validate_data_quality(df)
