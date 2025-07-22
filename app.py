@@ -1482,7 +1482,6 @@ def create_user_friendly_stock_selection(unique_symbols):
     symbol_to_name = get_complete_symbol_name_mapping()
     
     # Single clear header
-    st.markdown('<div class="section-header"><span class="section-icon">🎯</span><h2>Portfolio Builder</h2></div>', unsafe_allow_html=True)
     st.markdown("*Build your portfolio using categories, search, or browse*")
     
     # Create 2-column layout
