@@ -1481,7 +1481,7 @@ def create_user_friendly_stock_selection(unique_symbols):
     
     symbol_to_name = get_complete_symbol_name_mapping()
     
-    
+    st.markdown("---")
     # Create 2-column layout
     left_col, right_col = st.columns([35, 65])
     
@@ -1512,7 +1512,7 @@ def create_user_friendly_stock_selection(unique_symbols):
                     st.session_state.stock_basket = []
                     st.rerun()
             with col2:
-                st.success(f"✅ Ready!")
+                st.success(f"✅ Ready to analyze {len(st.session_state.stock_basket)} stocks!")
         else:
             st.info("👈 Select stocks from the categories or search")
             st.markdown("**Quick start suggestions:**")
