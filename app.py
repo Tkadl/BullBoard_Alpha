@@ -1791,7 +1791,7 @@ def create_user_friendly_stock_selection(unique_symbols):
                             st.success(f"Added {symbol}!")
                             st.rerun()
         
-        st.markdown("</div>", unsafe_allow_html=True)  # Close discovery container
+            st.markdown("</div>", unsafe_allow_html=True)  # Close discovery container
         
         elif discovery_method == "🔍 Search Stocks":
             st.markdown("**Find companies by name or ticker:**")
