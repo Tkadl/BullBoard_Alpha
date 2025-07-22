@@ -13,7 +13,7 @@ def validate_data_quality(df, min_days_needed=65):
     
     # Check 1: Remove extreme price movements (likely data errors >100% in one day)
     if 'daily_return' in df.columns:
-        df['temp_return'] = df.groupby('symbol')['Close'].pct_change()
+        df['temp_return'] = df.groupby('symbol')['Close'].pct_change(fill_method=None)
         extreme_moves = df[abs(df['temp_return']) > 1.0]  # >100% moves
         if not extreme_moves.empty:
             print(f"  ⚠️  Found {len(extreme_moves)} extreme price movements (>100%)")
