@@ -1803,14 +1803,6 @@ def main():
         
         st.success("🧠 Advanced Rule-Based Analytics Active")
         st.info("💡 Sophisticated insights without AI dependencies")
-
-        # Debug: Check if CSV exists
-        import os
-        if os.path.exists("latest_results.csv"):
-            file_size = os.path.getsize("latest_results.csv")
-            st.sidebar.success(f"✅ CSV found: {file_size:,} bytes")
-        else:
-            st.sidebar.error("❌ CSV not found!")
     
     # Load and validate data
     @st.cache_data
@@ -1819,35 +1811,33 @@ def main():
         try:
             import os
             
-            # Check if file exists
+            # Check if file exists (log only, don't show to user)
             if not os.path.exists("latest_results.csv"):
-                st.error("❌ File 'latest_results.csv' not found!")
+                print("❌ File 'latest_results.csv' not found!")  # Console log only
                 return None
             
-            # Check file size
+            # Log file info to console
             file_size = os.path.getsize("latest_results.csv")
-            st.info(f"📁 Found CSV file: {file_size:,} bytes")
+            print(f"📁 Loading CSV file: {file_size:,} bytes")  # Console log only
             
-            # Try to load
+            # Load data
             df = pd.read_csv("latest_results.csv", parse_dates=["Date"])
-            st.success(f"✅ Loaded {len(df):,} records, {df['symbol'].nunique()} symbols")
+            print(f"✅ Loaded {len(df):,} records, {df['symbol'].nunique()} symbols")  # Console log only
             
             if df.empty or 'symbol' not in df.columns:
-                st.error("❌ Data validation failed - empty or missing columns")
+                print("❌ Data validation failed - empty or missing columns")
                 return None
                 
             return df
             
         except FileNotFoundError:
-            st.error("❌ File not found: latest_results.csv")
+            print("❌ File not found: latest_results.csv")
             return None
         except pd.errors.EmptyDataError:
-            st.error("❌ CSV file is empty")
+            print("❌ CSV file is empty")
             return None
         except Exception as e:
-            st.error(f"❌ Error loading data: {str(e)}")
-            import traceback
-            st.text(traceback.format_exc())
+            print(f"❌ Error loading data: {str(e)}")
             return None
     
     # Load and validate data with caching
