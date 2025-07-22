@@ -1482,421 +1482,358 @@ def create_user_friendly_stock_selection(unique_symbols):
     symbol_to_name = get_complete_symbol_name_mapping()
     
     st.markdown("---")
-    # Create 2-column layout with enhanced styling
+    # Add custom CSS to style the entire columns
+    st.markdown("""
+    <style>
+    /* Style the left column container */
+    div[data-testid="column"]:nth-of-type(1) {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border-radius: 15px !important;
+        padding: 20px !important;
+        margin-right: 10px !important;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3) !important;
+    }
+    
+    /* Style the right column container */
+    div[data-testid="column"]:nth-of-type(2) {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+        border-radius: 15px !important;
+        padding: 20px !important;
+        margin-left: 10px !important;
+        box-shadow: 0 8px 32px rgba(240, 147, 251, 0.3) !important;
+    }
+    
+    /* Style buttons in left column */
+    div[data-testid="column"]:nth-of-type(1) .stButton > button {
+        background: rgba(255, 255, 255, 0.9) !important;
+        color: #2d3436 !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: bold !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    }
+    
+    /* Style buttons in right column */
+    div[data-testid="column"]:nth-of-type(2) .stButton > button {
+        background: rgba(255, 255, 255, 0.9) !important;
+        color: #2d3436 !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: bold !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    }
+    
+    /* Style selectboxes */
+    div[data-testid="column"] .stSelectbox > div > div {
+        background: rgba(255, 255, 255, 0.9) !important;
+        border-radius: 8px !important;
+        border: none !important;
+    }
+    
+    /* Style text inputs */
+    div[data-testid="column"] .stTextInput > div > div > input {
+        background: rgba(255, 255, 255, 0.9) !important;
+        border-radius: 8px !important;
+        border: none !important;
+        color: #2d3436 !important;
+    }
+    
+    /* Style text elements in left column */
+    div[data-testid="column"]:nth-of-type(1) p {
+        color: white !important;
+        font-weight: bold !important;
+    }
+    
+    /* Style text elements in right column */
+    div[data-testid="column"]:nth-of-type(2) p {
+        color: white !important;
+        font-weight: bold !important;
+    }
+    
+    /* Style markdown text */
+    div[data-testid="column"] .stMarkdown p {
+        color: white !important;
+        font-weight: bold !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Create 2-column layout
     left_col, right_col = st.columns([35, 65], gap="large")
     
     # === LEFT COLUMN: Current Portfolio ===
     with left_col:
-        # Portfolio container with full gradient background
-        portfolio_container = st.container()
-        with portfolio_container:
-            st.markdown("""
-            <div style="
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                padding: 25px;
-                border-radius: 15px;
-                box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
-                margin: -10px -10px 20px -10px;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                min-height: 600px;
-            ">
-                <h3 style='margin: 0 0 20px 0; color: white; text-align: center; font-weight: bold;'>
-                    📊 Your Portfolio
-                </h3>
-            """, unsafe_allow_html=True)
+        st.markdown("### 📊 Your Portfolio")
+        
+        if st.session_state.stock_basket:
+            st.write(f"**{len(st.session_state.stock_basket)} stocks selected:**")
             
-            if st.session_state.stock_basket:
-                # Stocks selected header
-                st.markdown(f"""
-                <div style="
-                    background: rgba(255, 255, 255, 0.9);
-                    padding: 12px 15px;
-                    border-radius: 8px;
-                    margin-bottom: 15px;
-                    color: #2d3436;
-                    font-weight: bold;
-                ">
-                {len(st.session_state.stock_basket)} stocks selected:
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Display each stock
-                for symbol in st.session_state.stock_basket:
-                    company_name = symbol_to_name.get(symbol, symbol)
+            # Display stocks with custom styling
+            for symbol in st.session_state.stock_basket:
+                company_name = symbol_to_name.get(symbol, symbol)
+                col1, col2 = st.columns([3, 1])
+                with col1:
                     st.markdown(f"""
                     <div style="
                         background: rgba(255, 255, 255, 0.95);
-                        padding: 12px 15px;
+                        padding: 10px 15px;
                         border-radius: 10px;
                         color: #2d3436;
                         font-weight: bold;
-                        margin: 8px 0;
+                        margin: 5px 0;
                         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
                         border-left: 4px solid #4facfe;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
                     ">
-                        <span>{symbol} - {company_name[:25]}{'...' if len(company_name) > 25 else ''}</span>
+                    {symbol} - {company_name[:25]}{'...' if len(company_name) > 25 else ''}
                     </div>
                     """, unsafe_allow_html=True)
-                    
-                    # Add remove button outside the styled div but still in gradient
-                    if st.button("❌ Remove", key=f"remove_{symbol}", help=f"Remove {symbol}"):
+                with col2:
+                    if st.button("❌", key=f"remove_{symbol}", help="Remove"):
                         st.session_state.stock_basket.remove(symbol)
                         st.rerun()
-                
-                # Portfolio status
-                portfolio_size = len(st.session_state.stock_basket)
-                if portfolio_size <= 3:
-                    status_color = "#ff9500"
-                    status_text = "Small portfolio"
-                    status_emoji = "🟡"
-                elif portfolio_size <= 6:
-                    status_color = "#28a745"
-                    status_text = "Good diversity"
-                    status_emoji = "🟢"
-                else:
-                    status_color = "#007bff"
-                    status_text = "Well diversified"
-                    status_emoji = "🔵"
-                
+            
+            # Portfolio status
+            portfolio_size = len(st.session_state.stock_basket)
+            if portfolio_size <= 3:
+                status_color = "#ff9500"
+                status_text = "Small portfolio"
+                status_emoji = "🟡"
+            elif portfolio_size <= 6:
+                status_color = "#28a745"
+                status_text = "Good diversity"
+                status_emoji = "🟢"
+            else:
+                status_color = "#007bff"
+                status_text = "Well diversified"
+                status_emoji = "🔵"
+            
+            st.markdown(f"""
+            <div style="
+                background: rgba(255, 255, 255, 0.95);
+                padding: 15px;
+                border-radius: 12px;
+                text-align: center;
+                color: {status_color};
+                font-weight: bold;
+                margin: 15px 0;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                border: 2px solid {status_color};
+            ">
+            {status_emoji} {portfolio_size} stocks selected - {status_text}
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Action buttons
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("🗑️ Clear All", key="clear_basket"):
+                    st.session_state.stock_basket = []
+                    st.rerun()
+            with col2:
                 st.markdown(f"""
                 <div style="
                     background: rgba(255, 255, 255, 0.95);
-                    padding: 15px;
-                    border-radius: 12px;
+                    padding: 10px 15px;
+                    border-radius: 10px;
                     text-align: center;
-                    color: {status_color};
+                    color: #28a745;
                     font-weight: bold;
-                    margin: 20px 0;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-                    border: 2px solid {status_color};
+                    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+                    border: 2px solid #28a745;
                 ">
-                {status_emoji} {portfolio_size} stocks selected - {status_text}
+                ✅ Ready to Analyze!
                 </div>
                 """, unsafe_allow_html=True)
-                
-                # Action buttons
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("🗑️ Clear All", key="clear_basket"):
-                        st.session_state.stock_basket = []
+        
+        else:
+            st.info("👈 Select stocks from the categories or search")
+            st.write("**Quick start suggestions:**")
+            quick_add = ['AAPL', 'MSFT', 'GOOGL']
+            for symbol in quick_add:
+                if symbol in unique_symbols:
+                    if st.button(f"+ Add {symbol}", key=f"quick_{symbol}"):
+                        st.session_state.stock_basket.append(symbol)
                         st.rerun()
-                with col2:
-                    st.markdown(f"""
-                    <div style="
-                        background: rgba(255, 255, 255, 0.95);
-                        padding: 12px 15px;
-                        border-radius: 10px;
-                        text-align: center;
-                        color: #28a745;
-                        font-weight: bold;
-                        box-shadow: 0 3px 12px rgba(0,0,0,0.1);
-                        border: 2px solid #28a745;
-                        margin-top: 10px;
-                    ">
-                    ✅ Ready to Analyze!
-                    </div>
-                    """, unsafe_allow_html=True)
-            
-            else:
-                # Empty state
-                st.markdown("""
-                <div style="
-                    background: rgba(255, 255, 255, 0.95);
-                    padding: 25px;
-                    border-radius: 12px;
-                    text-align: center;
-                    color: #2d3436;
-                    font-weight: bold;
-                    margin: 20px 0;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-                ">
-                👈 Select stocks from the categories or search
-                </div>
-                """, unsafe_allow_html=True)
-                
-                st.markdown("""
-                <p style="color: white; font-weight: bold; margin: 20px 0 10px 0; text-align: center;">
-                Quick start suggestions:
-                </p>
-                """, unsafe_allow_html=True)
-                
-                # Quick add buttons
-                quick_add = ['AAPL', 'MSFT', 'GOOGL']
-                for symbol in quick_add:
-                    if symbol in unique_symbols:
-                        if st.button(f"+ Add {symbol}", key=f"quick_{symbol}"):
-                            st.session_state.stock_basket.append(symbol)
-                            st.rerun()
-            
-            # Close portfolio gradient container
-            st.markdown("</div>", unsafe_allow_html=True)
     
     # === RIGHT COLUMN: Stock Discovery ===
     with right_col:
-        # Discovery container with full gradient background
-        discovery_container = st.container()
-        with discovery_container:
-            st.markdown("""
-            <div style="
-                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-                padding: 25px;
-                border-radius: 15px;
-                box-shadow: 0 8px 32px rgba(240, 147, 251, 0.3);
-                margin: -10px -10px 20px -10px;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                min-height: 600px;
-            ">
-                <h3 style='margin: 0 0 20px 0; color: white; text-align: center; font-weight: bold;'>
-                    🎯 Add Stocks
-                </h3>
-            """, unsafe_allow_html=True)
+        st.markdown("### 🎯 Add Stocks")
+        
+        # Discovery method selector
+        discovery_method = st.selectbox(
+            "Choose method:",
+            ["⚡ Quick Categories", "🔍 Search Stocks", "📊 Browse All"],
+            key="discovery_method"
+        )
+        
+        if discovery_method == "⚡ Quick Categories":
+            st.write("**One-click portfolio themes:**")
             
-            # Method selector
-            st.markdown("""
-            <p style="color: white; font-weight: bold; margin-bottom: 5px;">
-            Choose method:
-            </p>
-            """, unsafe_allow_html=True)
+            categories = {
+                "🍎 Big Tech": ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA'],
+                "🏦 Major Banks": ['JPM', 'BAC', 'WFC', 'C', 'GS', 'MS'],
+                "⚡ AI & Chips": ['NVDA', 'AMD', 'INTC', 'QCOM', 'AVGO'],
+                "💊 Healthcare": ['UNH', 'JNJ', 'PFE', 'ABBV', 'MRK', 'LLY'],
+                "🛒 Consumer": ['WMT', 'COST', 'HD', 'TGT', 'NKE', 'SBUX'],
+                "⚡ Energy": ['XOM', 'CVX', 'COP', 'NEE', 'DUK'],
+                "🏭 Industrial": ['BA', 'CAT', 'GE', 'HON', 'MMM', 'UPS'],
+                "💰 Dividends": ['JNJ', 'PG', 'KO', 'PEP', 'MCD', 'WMT']
+            }
             
-            discovery_method = st.selectbox(
-                "",
-                ["⚡ Quick Categories", "🔍 Search Stocks", "📊 Browse All"],
-                key="discovery_method",
-                label_visibility="collapsed"
-            )
+            # Create 2-column grid for categories
+            col1, col2 = st.columns(2, gap="medium")
             
-            if discovery_method == "⚡ Quick Categories":
-                st.markdown("""
-                <div style="
-                    background: rgba(255, 255, 255, 0.9);
-                    padding: 12px 15px;
-                    border-radius: 8px;
-                    margin: 15px 0;
-                    color: #2d3436;
-                    font-weight: bold;
-                ">
-                One-click portfolio themes:
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Categories
-                categories = {
-                    "🍎 Big Tech": ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA'],
-                    "🏦 Major Banks": ['JPM', 'BAC', 'WFC', 'C', 'GS', 'MS'],
-                    "⚡ AI & Chips": ['NVDA', 'AMD', 'INTC', 'QCOM', 'AVGO'],
-                    "💊 Healthcare": ['UNH', 'JNJ', 'PFE', 'ABBV', 'MRK', 'LLY'],
-                    "🛒 Consumer": ['WMT', 'COST', 'HD', 'TGT', 'NKE', 'SBUX'],
-                    "⚡ Energy": ['XOM', 'CVX', 'COP', 'NEE', 'DUK'],
-                    "🏭 Industrial": ['BA', 'CAT', 'GE', 'HON', 'MMM', 'UPS'],
-                    "💰 Dividends": ['JNJ', 'PG', 'KO', 'PEP', 'MCD', 'WMT']
-                }
-                
-                # Display category buttons
-                category_items = list(categories.items())
-                
-                for i, (category_name, stocks) in enumerate(category_items):
-                    if st.button(f"{category_name} ({len(stocks)} stocks)", 
-                               key=f"cat_{i}", 
-                               use_container_width=True):
+            category_items = list(categories.items())
+            
+            # Left column categories
+            with col1:
+                for i in range(0, len(category_items), 2):
+                    category_name, stocks = category_items[i]
+                    button_label = f"{category_name} ({len(stocks)})"
+                    
+                    if st.button(button_label, key=f"cat_{i}", use_container_width=True):
                         added_count = 0
                         for stock in stocks:
                             if stock in unique_symbols and stock not in st.session_state.stock_basket:
                                 st.session_state.stock_basket.append(stock)
                                 added_count += 1
                         if added_count > 0:
-                            st.success(f"Added {added_count} stocks from {category_name}!")
+                            st.success(f"Added {added_count} stocks!")
                             st.rerun()
-                        else:
-                            st.info("All stocks from this category are already in your portfolio!")
-                
-                # Tip
-                st.markdown("""
-                <div style="
-                    background: rgba(255, 255, 255, 0.95);
-                    padding: 15px;
-                    border-radius: 10px;
-                    text-align: center;
-                    color: #e17055;
-                    font-weight: bold;
-                    margin-top: 20px;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                    border-left: 4px solid #fdcb6e;
-                ">
-                💡 Tip: Click any category above to add all its stocks to your portfolio!
-                </div>
-                """, unsafe_allow_html=True)
             
-            elif discovery_method == "🔍 Search Stocks":
-                st.markdown("""
-                <div style="
-                    background: rgba(255, 255, 255, 0.9);
-                    padding: 12px 15px;
-                    border-radius: 8px;
-                    margin: 15px 0;
-                    color: #2d3436;
-                    font-weight: bold;
-                ">
-                Find companies by name or ticker:
-                </div>
-                """, unsafe_allow_html=True)
-                
-                search_term = st.text_input(
-                    "",
-                    placeholder="e.g., 'Apple', 'Tesla', 'AAPL'",
-                    key="stock_search",
-                    label_visibility="collapsed"
-                )
-                
-                if search_term:
-                    # Search logic
-                    matches = []
-                    search_lower = search_term.lower()
-                    for symbol in unique_symbols:
-                        company_name = symbol_to_name.get(symbol, symbol)
-                        if (search_lower in symbol.lower() or 
-                            search_lower in company_name.lower()):
-                            matches.append((symbol, company_name))
+            # Right column categories
+            with col2:
+                for i in range(1, len(category_items), 2):
+                    category_name, stocks = category_items[i]
+                    button_label = f"{category_name} ({len(stocks)})"
                     
-                    if matches:
-                        st.markdown(f"""
-                        <div style="
-                            background: rgba(255, 255, 255, 0.9);
-                            padding: 10px 15px;
-                            border-radius: 8px;
-                            margin: 15px 0;
-                            color: #2d3436;
-                            font-weight: bold;
-                        ">
-                        Found {len(matches)} matches:
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # Display first 10 matches
-                        for symbol, company_name in matches[:10]:
-                            col1, col2 = st.columns([3, 1])
-                            with col1:
-                                st.markdown(f"""
-                                <div style="
-                                    background: rgba(255, 255, 255, 0.95);
-                                    padding: 10px 12px;
-                                    border-radius: 8px;
-                                    color: #2d3436;
-                                    margin: 5px 0;
-                                    border-left: 3px solid #f093fb;
-                                    font-weight: bold;
-                                ">
-                                {symbol} - {company_name}
-                                </div>
-                                """, unsafe_allow_html=True)
-                            with col2:
-                                if st.button("➕", key=f"add_{symbol}", help="Add"):
-                                    if symbol not in st.session_state.stock_basket:
-                                        st.session_state.stock_basket.append(symbol)
-                                        st.success(f"Added {symbol}!")
-                                        st.rerun()
-                    else:
-                        st.markdown("""
-                        <div style="
-                            background: rgba(255, 255, 255, 0.9);
-                            padding: 12px 15px;
-                            border-radius: 8px;
-                            margin: 15px 0;
-                            color: #e74c3c;
-                            font-weight: bold;
-                            text-align: center;
-                        ">
-                        No matches found. Try a different search term.
-                        </div>
-                        """, unsafe_allow_html=True)
+                    if st.button(button_label, key=f"cat_{i}", use_container_width=True):
+                        added_count = 0
+                        for stock in stocks:
+                            if stock in unique_symbols and stock not in st.session_state.stock_basket:
+                                st.session_state.stock_basket.append(stock)
+                                added_count += 1
+                        if added_count > 0:
+                            st.success(f"Added {added_count} stocks!")
+                            st.rerun()
             
-            elif discovery_method == "📊 Browse All":
-                st.markdown("""
-                <div style="
-                    background: rgba(255, 255, 255, 0.9);
-                    padding: 12px 15px;
-                    border-radius: 8px;
-                    margin: 15px 0;
-                    color: #2d3436;
-                    font-weight: bold;
-                ">
-                All available stocks:
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Pagination
-                items_per_page = 15
-                total_items = len(unique_symbols)
-                total_pages = (total_items - 1) // items_per_page + 1
-                
-                st.markdown("""
-                <p style="color: white; font-weight: bold; margin: 10px 0 5px 0;">
-                Select page:
-                </p>
-                """, unsafe_allow_html=True)
-                
-                page = st.selectbox(
-                    "",
-                    range(1, total_pages + 1),
-                    key="browse_page",
-                    label_visibility="collapsed"
-                )
-                
-                start_idx = (page - 1) * items_per_page
-                end_idx = min(start_idx + items_per_page, total_items)
-                
-                st.markdown(f"""
-                <div style="
-                    background: rgba(255, 255, 255, 0.9);
-                    padding: 8px 12px;
-                    border-radius: 8px;
-                    margin: 10px 0;
-                    color: #2d3436;
-                    font-weight: bold;
-                ">
-                Showing stocks {start_idx + 1}-{end_idx} of {total_items}:
-                </div>
-                """, unsafe_allow_html=True)
-                # Display stocks for current page
-                for i in range(start_idx, end_idx):
-                    symbol = unique_symbols[i]
+            # Tip section
+            st.markdown("""
+            <div style="
+                background: rgba(255, 255, 255, 0.95);
+                padding: 15px;
+                border-radius: 10px;
+                text-align: center;
+                color: #e17055;
+                font-weight: bold;
+                margin-top: 20px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                border-left: 4px solid #fdcb6e;
+            ">
+            💡 Tip: Click any category above to add all its stocks to your portfolio!
+            </div>
+            """, unsafe_allow_html=True)
+        
+        elif discovery_method == "🔍 Search Stocks":
+            st.write("**Find companies by name or ticker:**")
+            
+            search_term = st.text_input(
+                "Search:",
+                placeholder="e.g., 'Apple', 'Tesla', 'AAPL'",
+                key="stock_search"
+            )
+            
+            if search_term:
+                # Search logic
+                matches = []
+                search_lower = search_term.lower()
+                for symbol in unique_symbols:
                     company_name = symbol_to_name.get(symbol, symbol)
+                    if (search_lower in symbol.lower() or 
+                        search_lower in company_name.lower()):
+                        matches.append((symbol, company_name))
+                
+                if matches:
+                    st.write(f"**Found {len(matches)} matches:**")
                     
-                    col1, col2 = st.columns([3, 1])
-                    with col1:
-                        st.markdown(f"""
-                        <div style="
-                            background: rgba(255, 255, 255, 0.95);
-                            padding: 8px 12px;
-                            border-radius: 8px;
-                            color: #2d3436;
-                            margin: 3px 0;
-                            border-left: 3px solid #f093fb;
-                            font-weight: bold;
-                        ">
-                        {symbol} - {company_name}
-                        </div>
-                        """, unsafe_allow_html=True)
-                    with col2:
-                        if st.button("➕", key=f"browse_add_{symbol}", help="Add"):
-                            if symbol not in st.session_state.stock_basket:
-                                st.session_state.stock_basket.append(symbol)
-                                st.success(f"Added {symbol}!")
-                                st.rerun()
+                    # Display first 10 matches
+                    for symbol, company_name in matches[:10]:
+                        col1, col2 = st.columns([3, 1])
+                        with col1:
+                            st.markdown(f"""
+                            <div style="
+                                background: rgba(255, 255, 255, 0.95);
+                                padding: 8px 12px;
+                                border-radius: 8px;
+                                color: #2d3436;
+                                margin: 5px 0;
+                                border-left: 3px solid #f093fb;
+                            ">
+                            <strong>{symbol}</strong> - {company_name}
+                            </div>
+                            """, unsafe_allow_html=True)
+                        with col2:
+                            if st.button("➕", key=f"add_{symbol}", help="Add"):
+                                if symbol not in st.session_state.stock_basket:
+                                    st.session_state.stock_basket.append(symbol)
+                                    st.success(f"Added {symbol}!")
+                                    st.rerun()
+                else:
+                    st.warning("No matches found. Try a different search term.")
+        
+        elif discovery_method == "📊 Browse All":
+            st.write("**All available stocks:**")
             
-            # Close discovery gradient container
-            st.markdown("</div>", unsafe_allow_html=True)
+            # Pagination
+            items_per_page = 15
+            total_items = len(unique_symbols)
+            total_pages = (total_items - 1) // items_per_page + 1
+            
+            page = st.selectbox(
+                f"Page (showing {items_per_page} stocks per page):",
+                range(1, total_pages + 1),
+                key="browse_page"
+            )
+            
+            start_idx = (page - 1) * items_per_page
+            end_idx = min(start_idx + items_per_page, total_items)
+            
+            st.write(f"**Showing stocks {start_idx + 1}-{end_idx} of {total_items}:**")
+            
+            # Display stocks
+            for i in range(start_idx, end_idx):
+                symbol = unique_symbols[i]
+                company_name = symbol_to_name.get(symbol, symbol)
+                
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    st.markdown(f"""
+                    <div style="
+                        background: rgba(255, 255, 255, 0.95);
+                        padding: 8px 12px;
+                        border-radius: 8px;
+                        color: #2d3436;
+                        margin: 3px 0;
+                        border-left: 3px solid #f093fb;
+                    ">
+                    <strong>{symbol}</strong> - {company_name}
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col2:
+                    if st.button("➕", key=f"browse_add_{symbol}", help="Add"):
+                        if symbol not in st.session_state.stock_basket:
+                            st.session_state.stock_basket.append(symbol)
+                            st.success(f"Added {symbol}!")
+                            st.rerun()
     
-        # Return selection
-        if st.session_state.stock_basket:
-            return st.session_state.stock_basket
-        else:
-            # Default fallback
-            default_stocks = ['AAPL', 'MSFT', 'GOOGL']
-            available_defaults = [stock for stock in default_stocks if stock in unique_symbols]
-            return available_defaults[:3] if available_defaults else unique_symbols[:3]
+    # Return selection
+    if st.session_state.stock_basket
+        return st.session_state.stock_basket
+    else:
+        # Default fallback
+        default_stocks = ['AAPL', 'MSFT', 'GOOGL']
+        available_defaults = [stock for stock in default_stocks if stock in unique_symbols]
+        return available_defaults[:3] if available_defaults else unique_symbols[:3]
 
 def main():
     create_header()
