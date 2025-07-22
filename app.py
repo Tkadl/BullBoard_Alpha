@@ -1720,6 +1720,76 @@ def create_user_friendly_stock_selection(unique_symbols):
             💡 Tip: Click any category above to add all its stocks to your portfolio!
             </div>
             """, unsafe_allow_html=True)
+
+        elif discovery_method == "🔍 Search Stocks":
+        st.markdown("**Find companies by name or ticker:**")
+        
+        search_term = st.text_input(
+            "Search:",
+            placeholder="e.g., 'Apple', 'Tesla', 'AAPL'",
+            key="stock_search"
+        )
+        
+        if search_term:
+            # Simple search logic
+            matches = []
+            search_lower = search_term.lower()
+            for symbol in unique_symbols:
+                company_name = symbol_to_name.get(symbol, symbol)
+                if (search_lower in symbol.lower() or 
+                    search_lower in company_name.lower()):
+                    matches.append((symbol, company_name))
+            
+            if matches:
+                st.markdown(f"**Found {len(matches)} matches:**")
+                
+                # Display matches in a nice format
+                for symbol, company_name in matches[:10]:  # Limit to 10 results
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.markdown(f"**{symbol}** - {company_name}")
+                    with col2:
+                        if st.button("➕", key=f"add_{symbol}", help="Add to portfolio"):
+                            if symbol not in st.session_state.stock_basket:
+                                st.session_state.stock_basket.append(symbol)
+                                st.success(f"Added {symbol}!")
+                                st.rerun()
+            else:
+                st.info("No matches found. Try a different search term.")
+    
+    elif discovery_method == "📊 Browse All":
+        st.markdown("**All available stocks:**")
+        
+        # Pagination for browsing
+        items_per_page = 20
+        total_items = len(unique_symbols)
+        total_pages = (total_items - 1) // items_per_page + 1
+        
+        page = st.selectbox(
+            f"Page (showing {items_per_page} stocks per page):",
+            range(1, total_pages + 1),
+            key="browse_page"
+        )
+        
+        start_idx = (page - 1) * items_per_page
+        end_idx = min(start_idx + items_per_page, total_items)
+        
+        st.markdown(f"**Showing stocks {start_idx + 1}-{end_idx} of {total_items}:**")
+        
+        # Display stocks for current page
+        for i in range(start_idx, end_idx):
+            symbol = unique_symbols[i]
+            company_name = symbol_to_name.get(symbol, symbol)
+            
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown(f"**{symbol}** - {company_name}")
+            with col2:
+                if st.button("➕", key=f"browse_add_{symbol}", help="Add to portfolio"):
+                    if symbol not in st.session_state.stock_basket:
+                        st.session_state.stock_basket.append(symbol)
+                        st.success(f"Added {symbol}!")
+                        st.rerun()
         
         st.markdown("</div>", unsafe_allow_html=True)  # Close discovery container
         
