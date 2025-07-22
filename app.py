@@ -1487,7 +1487,11 @@ def create_user_friendly_stock_selection(unique_symbols):
     
     # === LEFT COLUMN: Current Portfolio ===
     with left_col:
-        st.markdown("### 📊 Your Portfolio")
+        st.markdown("""
+        <h3 style='margin-top: 0px; margin-bottom: 1rem;'>
+        📊 Your Portfolio
+        </h3>
+        """, unsafe_allow_html=True)
         
         if st.session_state.stock_basket:
             # Compact stock display
@@ -1564,7 +1568,11 @@ def create_user_friendly_stock_selection(unique_symbols):
     
     # === RIGHT COLUMN: Stock Discovery ===
     with right_col:
-        st.markdown("### 🎯 Add Stocks")
+        st.markdown("""
+        <h3 style='margin-top: 0px; margin-bottom: 1rem;'>
+        🎯 Add Stocks
+        </h3>
+        """, unsafe_allow_html=True)
         
         # Tab-like interface using selectbox
         discovery_method = st.selectbox(
