@@ -1847,8 +1847,8 @@ def create_user_friendly_stock_selection(unique_symbols):
                 start_idx = (page - 1) * items_per_page
                 end_idx = min(start_idx + items_per_page, total_items)
                 
-               st.markdown(f"""
-               <div style="
+                st.markdown(f"""
+                <div style="
                     background: rgba(255, 255, 255, 0.9);
                     padding: 8px 12px;
                     border-radius: 8px;
