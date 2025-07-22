@@ -1721,7 +1721,7 @@ def create_user_friendly_stock_selection(unique_symbols):
             </div>
             """, unsafe_allow_html=True)
 
-            elif discovery_method == "🔍 Search Stocks":
+        elif discovery_method == "🔍 Search Stocks":
             st.markdown("**Find companies by name or ticker:**")
             
             search_term = st.text_input(
