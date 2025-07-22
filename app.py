@@ -1590,45 +1590,46 @@ def create_user_friendly_stock_selection(unique_symbols):
         
          
             
-            # Create columns with medium gap for better spacing
-            col1, col2 = st.columns([1, 1], gap="medium")
+            # Create 2-column grid for categories
+            col1, col2 = st.columns(2, gap="medium")
+            
             category_items = list(categories.items())
             
-            for i in range(0, len(category_items), 2):
-                with col1:
-                    if i < len(category_items):
-                        name, stocks = category_items[i]
-                        available = len([s for s in stocks if s in unique_symbols])
-                        if st.button(f"{name}\n({available} stocks)", 
-                                    key=f"cat_{i}",
-                                    use_container_width=True):
-                            added = 0
-                            for symbol in stocks:
-                                if symbol not in st.session_state.stock_basket and symbol in unique_symbols:
-                                    st.session_state.stock_basket.append(symbol)
-                                    added += 1
-                            if added > 0:
-                                st.success(f"Added {added} stocks!")
-                                st.rerun()
-                
-                with col2:
-                    if i + 1 < len(category_items):
-                        name, stocks = category_items[i + 1]
-                        available = len([s for s in stocks if s in unique_symbols])
-                        if st.button(f"{name}\n({available} stocks)", 
-                                    key=f"cat_{i+1}",
-                                    use_container_width=True):
-                            added = 0
-                            for symbol in stocks:
-                                if symbol not in st.session_state.stock_basket and symbol in unique_symbols:
-                                    st.session_state.stock_basket.append(symbol)
-                                    added += 1
-                            if added > 0:
-                                st.success(f"Added {added} stocks!")
-                                st.rerun()
-                
-                # Add small spacing between button rows
-                st.markdown("")
+            # Left column categories (first half)
+            with col1:
+                for i in range(0, len(category_items), 2):
+                    category_name, stocks = category_items[i]
+                    
+                    # Category button with stock count
+                    button_label = f"{category_name} ({len(stocks)})"
+                    
+                    if st.button(button_label, key=f"cat_{i}", use_container_width=True):
+                        # Add all stocks from category
+                        for stock in stocks:
+                            if stock in unique_symbols and stock not in st.session_state.stock_basket:
+                                st.session_state.stock_basket.append(stock)
+                        st.success(f"Added {category_name} stocks!")
+                        st.rerun()
+            
+            # Right column categories (second half)
+            with col2:
+                for i in range(1, len(category_items), 2):
+                    category_name, stocks = category_items[i]
+                    
+                    # Category button with stock count
+                    button_label = f"{category_name} ({len(stocks)})"
+                    
+                    if st.button(button_label, key=f"cat_{i}", use_container_width=True):
+                        # Add all stocks from category
+                        for stock in stocks:
+                            if stock in unique_symbols and stock not in st.session_state.stock_basket:
+                                st.session_state.stock_basket.append(stock)
+                        st.success(f"Added {category_name} stocks!")
+                        st.rerun()
+            
+            # Show preview of what will be added
+            st.markdown("---")
+            st.markdown("**💡 Tip:** Click any category above to add all its stocks to your portfolio!")
         
         elif discovery_method == "🔍 Search Stocks":
             st.markdown("**Find companies by name or ticker:**")
