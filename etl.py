@@ -215,30 +215,64 @@ def get_sp500_symbols():
     return sp500_symbols
 
 def main():
-    import os
     print("=== ETL MAIN FUNCTION STARTED ===")
-    print("=== DEBUG MODE: testing with minimal, slow, and verbose ETL ===")
-    # === DEBUG OVERRIDE ===
-    tickers = ['AAPL', 'MSFT', 'GOOGL']  # Pick just 3 mainstream tickers
-    batch_size = 1                      # Slowest batch
-    delay_between_batches = 5            # 5 seconds between batches 
-    start_date = "2024-01-01"
-    end_date = date.today().strftime("%Y-%m-%d")  # Use date.today() instead
+    
+    try:
+        # Test S&P 500 symbol fetching first
+        print("Step 1: Fetching S&P 500 symbols...")
+        tickers = get_sp500_symbols()
+        print(f"✅ Successfully got {len(tickers)} symbols")
+        print(f"First 10 symbols: {tickers[:10]}")
+        
+        # Test single stock fetch
+        print("\nStep 2: Testing single stock fetch...")
+        import yfinance as yf
+        test_ticker = yf.Ticker("AAPL")
+        test_data = test_ticker.history(period="5d")
+        print(f"✅ Test fetch successful: {len(test_data)} days of AAPL data")
+        
+        # Test the date setup
+        print("\nStep 3: Testing date configuration...")
+        from datetime import date
+        start_date = "2024-01-01"
+        end_date = date.today().strftime("%Y-%m-%d")
+        print(f"✅ Date range: {start_date} to {end_date}")
+        
+        # Test existing data check
+        print("\nStep 4: Checking existing data...")
+        existing_df, last_date, existing_symbols = get_last_update_info()
+        print(f"✅ Existing data check complete")
+        print(f"Last date: {last_date}")
+        print(f"Existing symbols: {len(existing_symbols) if existing_symbols else 0}")
+        
+        print("\n🎉 All basic tests passed! Issue is likely in the actual data fetching...")
+        
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        return
+
+    # Original code continues here...
+    print("\nContinuing with original ETL logic...")
+    
+    # === USER CONFIGURATION ===
     min_days_needed = 65
-    yield_thresh = 0.01          # 1% daily yield
-    risk_thresh = 0.06           # Custom risk score
+    yield_thresh = 0.01          
+    risk_thresh = 0.06           
     rolling_vol_days = 21
     rolling_drawdown_days = 63
-    batch_size = 20  # Reduced batch size for better reliability with more symbols
-    delay_between_batches = 1  # Add delay between batches
+    batch_size = 5  # Reduced from 20
+    delay_between_batches = 3  # Increased from 1
 
     print(f"Checking for existing data and update requirements...")
 
     # Check what data we already have
-    existing_df, last_date, existing_symbols = get_last_update_info()
     can_do_incremental, reason = should_do_incremental_update(last_date, existing_symbols, tickers)
 
     print(f"Update decision: {reason}")
+    
+    # Continue with your existing if/else logic...
 
     if can_do_incremental:
         print("=== PERFORMING INCREMENTAL UPDATE ===")
@@ -377,30 +411,8 @@ def main():
     df = validate_data_quality(df)
     
     # Save summary table for Streamlit app
-print("\n=== DEBUG SUMMARY BEFORE SAVE ===")
-if 'df' in locals():
-    sample_df = df
-elif 'combined_df' in locals():
-    sample_df = combined_df
-else:
-    print("No dataframe to show!")
-    sample_df = None
-
-if sample_df is not None:
-    print(f"Rows to be saved: {len(sample_df)}")
-    print(f"Unique symbols (if available): {sample_df['symbol'].nunique() if 'symbol' in sample_df.columns else 'N/A'}")
-    print("Sample rows:")
-    print(sample_df.head())
-else:
-    print("No data will be saved!")
-
-# Now try to save, and confirm file size:
-output_path = "latest_results.csv"
-try:
-    sample_df.to_csv(output_path, index=False)
-    print(f"✅ Data saved to: {output_path}. Size: {os.path.getsize(output_path)} bytes")
-except Exception as e:
-    print(f"❌ Failed to save: {e}")
+    df.to_csv("latest_results.csv", index=False)
+    print(f"Data saved to latest_results.csv with {len(df)} total records for {df['symbol'].nunique()} unique symbols")
 
 if __name__ == "__main__":
     main()
