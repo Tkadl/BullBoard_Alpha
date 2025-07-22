@@ -1587,6 +1587,11 @@ def create_user_friendly_stock_selection(unique_symbols):
                 "🏭 Industrial": ['BA', 'CAT', 'GE', 'HON', 'MMM', 'UPS'],
                 "💰 Dividends": ['JNJ', 'PG', 'KO', 'PEP', 'MCD', 'WMT']
             }
+        
+        
+        # Create columns with medium gap for better spacing
+        col1, col2 = st.columns([1, 1], gap="medium")
+        category_items = list(categories.items())
             
             
             # Create columns with medium gap for better spacing
