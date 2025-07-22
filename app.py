@@ -1487,7 +1487,7 @@ def create_user_friendly_stock_selection(unique_symbols):
     
     # === LEFT COLUMN: Current Portfolio ===
     with left_col:
-        # Portfolio column with gradient background
+        # Full column gradient background container
         st.markdown("""
         <div style="
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -1496,41 +1496,43 @@ def create_user_friendly_stock_selection(unique_symbols):
             box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
             margin-bottom: 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            min-height: 500px;
         ">
-            <h3 style='margin: 0; color: white; text-align: center; font-weight: bold;'>
+            <h3 style='margin: 0 0 20px 0; color: white; text-align: center; font-weight: bold;'>
                 📊 Your Portfolio
             </h3>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Portfolio content container
-        st.markdown("""
-        <div style="
-            background: rgba(102, 126, 234, 0.05);
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
-        ">
         """, unsafe_allow_html=True)
         
         if st.session_state.stock_basket:
-            # Compact stock display
-            st.markdown(f"**{len(st.session_state.stock_basket)} stocks selected:**")
+            # Stocks selected header in white container
+            st.markdown(f"""
+            <div style="
+                background: rgba(255, 255, 255, 0.9);
+                padding: 10px 15px;
+                border-radius: 8px;
+                margin-bottom: 15px;
+                color: #2d3436;
+                font-weight: bold;
+            ">
+            {len(st.session_state.stock_basket)} stocks selected:
+            </div>
+            """, unsafe_allow_html=True)
             
-            # Display as styled pills
+            # Display each stock in white containers
             for symbol in st.session_state.stock_basket:
                 company_name = symbol_to_name.get(symbol, symbol)
                 col1, col2 = st.columns([3, 1])
                 with col1:
                     st.markdown(f"""
                     <div style="
-                        background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-                        padding: 8px 12px;
-                        border-radius: 20px;
-                        color: white;
+                        background: rgba(255, 255, 255, 0.95);
+                        padding: 10px 15px;
+                        border-radius: 10px;
+                        color: #2d3436;
                         font-weight: bold;
                         margin: 5px 0;
-                        box-shadow: 0 2px 10px rgba(79, 172, 254, 0.3);
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                        border-left: 4px solid #4facfe;
                     ">
                     {symbol} - {company_name[:25]}{'...' if len(company_name) > 25 else ''}
                     </div>
@@ -1540,10 +1542,7 @@ def create_user_friendly_stock_selection(unique_symbols):
                         st.session_state.stock_basket.remove(symbol)
                         st.rerun()
             
-            # Portfolio status and actions
-            st.markdown("---")
-            
-            # Enhanced status badge
+            # Portfolio status badge
             portfolio_size = len(st.session_state.stock_basket)
             if portfolio_size <= 3:
                 status_color = "#ff9500"
@@ -1560,14 +1559,15 @@ def create_user_friendly_stock_selection(unique_symbols):
             
             st.markdown(f"""
             <div style="
-                background: linear-gradient(90deg, {status_color}, {status_color}dd);
+                background: rgba(255, 255, 255, 0.95);
                 padding: 15px;
                 border-radius: 12px;
                 text-align: center;
-                color: white;
+                color: {status_color};
                 font-weight: bold;
                 margin: 15px 0;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                border: 2px solid {status_color};
             ">
             {status_emoji} {portfolio_size} stocks selected - {status_text}
             </div>
@@ -1582,33 +1582,48 @@ def create_user_friendly_stock_selection(unique_symbols):
             with col2:
                 st.markdown(f"""
                 <div style="
-                    background: linear-gradient(45deg, #28a745, #20c997);
+                    background: rgba(255, 255, 255, 0.95);
                     padding: 10px 15px;
                     border-radius: 10px;
                     text-align: center;
-                    color: white;
+                    color: #28a745;
                     font-weight: bold;
-                    box-shadow: 0 3px 12px rgba(40, 167, 69, 0.4);
+                    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+                    border: 2px solid #28a745;
                 ">
                 ✅ Ready to Analyze!
                 </div>
                 """, unsafe_allow_html=True)
         else:
+            # Empty state in white container
             st.markdown("""
             <div style="
-                background: linear-gradient(135deg, #ffeaa7, #fab1a0);
-                padding: 15px;
-                border-radius: 10px;
+                background: rgba(255, 255, 255, 0.95);
+                padding: 20px;
+                border-radius: 12px;
                 text-align: center;
                 color: #2d3436;
                 font-weight: bold;
-                margin: 10px 0;
+                margin: 20px 0;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             ">
             👈 Select stocks from the categories or search
             </div>
             """, unsafe_allow_html=True)
             
-            st.markdown("**Quick start suggestions:**")
+            st.markdown("""
+            <div style="
+                background: rgba(255, 255, 255, 0.9);
+                padding: 10px 15px;
+                border-radius: 8px;
+                margin-bottom: 10px;
+                color: #2d3436;
+                font-weight: bold;
+            ">
+            Quick start suggestions:
+            </div>
+            """, unsafe_allow_html=True)
+            
             quick_add = ['AAPL', 'MSFT', 'GOOGL']
             for symbol in quick_add:
                 if symbol in unique_symbols:
@@ -1616,11 +1631,12 @@ def create_user_friendly_stock_selection(unique_symbols):
                         st.session_state.stock_basket.append(symbol)
                         st.rerun()
         
-        st.markdown("</div>", unsafe_allow_html=True)  # Close portfolio container
+        # Close the gradient container
+        st.markdown("</div>", unsafe_allow_html=True)
     
     # === RIGHT COLUMN: Stock Discovery ===
     with right_col:
-        # Discovery column with gradient background
+        # Full column gradient background container
         st.markdown("""
         <div style="
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -1629,21 +1645,11 @@ def create_user_friendly_stock_selection(unique_symbols):
             box-shadow: 0 8px 32px rgba(240, 147, 251, 0.3);
             margin-bottom: 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            min-height: 500px;
         ">
-            <h3 style='margin: 0; color: white; text-align: center; font-weight: bold;'>
+            <h3 style='margin: 0 0 20px 0; color: white; text-align: center; font-weight: bold;'>
                 🎯 Add Stocks
             </h3>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Discovery content container
-        st.markdown("""
-        <div style="
-            background: rgba(240, 147, 251, 0.05);
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 4px solid #f093fb;
-        ">
         """, unsafe_allow_html=True)
         
         # Tab-like interface using selectbox
@@ -1654,9 +1660,20 @@ def create_user_friendly_stock_selection(unique_symbols):
         )
         
         if discovery_method == "⚡ Quick Categories":
-            st.markdown("**One-click portfolio themes:**")
+            st.markdown("""
+            <div style="
+                background: rgba(255, 255, 255, 0.9);
+                padding: 10px 15px;
+                border-radius: 8px;
+                margin-bottom: 15px;
+                color: #2d3436;
+                font-weight: bold;
+            ">
+            One-click portfolio themes:
+            </div>
+            """, unsafe_allow_html=True)
             
-            # Quick categories in compact 2x4 grid
+            # Quick categories
             categories = {
                 "🍎 Big Tech": ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA'],
                 "🏦 Major Banks": ['JPM', 'BAC', 'WFC', 'C', 'GS', 'MS'],
@@ -1673,56 +1690,62 @@ def create_user_friendly_stock_selection(unique_symbols):
             
             category_items = list(categories.items())
             
-            # Left column categories (first half)
+            # Left column categories
             with col1:
                 for i in range(0, len(category_items), 2):
                     category_name, stocks = category_items[i]
-                    
-                    # Enhanced category button
                     button_label = f"{category_name} ({len(stocks)})"
                     
                     if st.button(button_label, key=f"cat_{i}", use_container_width=True):
-                        # Add all stocks from category
                         for stock in stocks:
                             if stock in unique_symbols and stock not in st.session_state.stock_basket:
                                 st.session_state.stock_basket.append(stock)
                         st.success(f"Added {category_name} stocks!")
                         st.rerun()
             
-            # Right column categories (second half)
+            # Right column categories
             with col2:
                 for i in range(1, len(category_items), 2):
                     category_name, stocks = category_items[i]
-                    
-                    # Enhanced category button
                     button_label = f"{category_name} ({len(stocks)})"
                     
                     if st.button(button_label, key=f"cat_{i}", use_container_width=True):
-                        # Add all stocks from category
                         for stock in stocks:
                             if stock in unique_symbols and stock not in st.session_state.stock_basket:
                                 st.session_state.stock_basket.append(stock)
                         st.success(f"Added {category_name} stocks!")
                         st.rerun()
             
-            # Enhanced tip section
+            # Tip section in white container
             st.markdown("""
             <div style="
-                background: linear-gradient(90deg, #fdcb6e, #e17055);
-                padding: 12px;
-                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.95);
+                padding: 15px;
+                border-radius: 10px;
                 text-align: center;
-                color: white;
+                color: #e17055;
                 font-weight: bold;
-                margin-top: 15px;
-                box-shadow: 0 2px 10px rgba(253, 203, 110, 0.3);
+                margin-top: 20px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                border-left: 4px solid #fdcb6e;
             ">
             💡 Tip: Click any category above to add all its stocks to your portfolio!
             </div>
             """, unsafe_allow_html=True)
-
+        
         elif discovery_method == "🔍 Search Stocks":
-            st.markdown("**Find companies by name or ticker:**")
+            st.markdown("""
+            <div style="
+                background: rgba(255, 255, 255, 0.9);
+                padding: 10px 15px;
+                border-radius: 8px;
+                margin-bottom: 15px;
+                color: #2d3436;
+                font-weight: bold;
+            ">
+            Find companies by name or ticker:
+            </div>
+            """, unsafe_allow_html=True)
             
             search_term = st.text_input(
                 "Search:",
@@ -1741,13 +1764,35 @@ def create_user_friendly_stock_selection(unique_symbols):
                         matches.append((symbol, company_name))
                 
                 if matches:
-                    st.markdown(f"**Found {len(matches)} matches:**")
+                    st.markdown(f"""
+                    <div style="
+                        background: rgba(255, 255, 255, 0.9);
+                        padding: 10px 15px;
+                        border-radius: 8px;
+                        margin: 10px 0;
+                        color: #2d3436;
+                        font-weight: bold;
+                    ">
+                    Found {len(matches)} matches:
+                    </div>
+                    """, unsafe_allow_html=True)
                     
-                    # Display matches in a nice format
-                    for symbol, company_name in matches[:10]:  # Limit to 10 results
+                    # Display matches in white containers
+                    for symbol, company_name in matches[:10]:
                         col1, col2 = st.columns([3, 1])
                         with col1:
-                            st.markdown(f"**{symbol}** - {company_name}")
+                            st.markdown(f"""
+                            <div style="
+                                background: rgba(255, 255, 255, 0.95);
+                                padding: 8px 12px;
+                                border-radius: 8px;
+                                color: #2d3436;
+                                margin: 5px 0;
+                                border-left: 3px solid #f093fb;
+                            ">
+                            <strong>{symbol}</strong> - {company_name}
+                            </div>
+                            """, unsafe_allow_html=True)
                         with col2:
                             if st.button("➕", key=f"add_{symbol}", help="Add to portfolio"):
                                 if symbol not in st.session_state.stock_basket:
@@ -1758,7 +1803,18 @@ def create_user_friendly_stock_selection(unique_symbols):
                     st.info("No matches found. Try a different search term.")
         
         elif discovery_method == "📊 Browse All":
-            st.markdown("**All available stocks:**")
+            st.markdown("""
+            <div style="
+                background: rgba(255, 255, 255, 0.9);
+                padding: 10px 15px;
+                border-radius: 8px;
+                margin-bottom: 15px;
+                color: #2d3436;
+                font-weight: bold;
+            ">
+            All available stocks:
+            </div>
+            """, unsafe_allow_html=True)
             
             # Pagination for browsing
             items_per_page = 20
@@ -1774,25 +1830,48 @@ def create_user_friendly_stock_selection(unique_symbols):
             start_idx = (page - 1) * items_per_page
             end_idx = min(start_idx + items_per_page, total_items)
             
-            st.markdown(f"**Showing stocks {start_idx + 1}-{end_idx} of {total_items}:**")
-            
-            # Display stocks for current page
+            st.markdown(f"""
+            <div style="
+                background: rgba(255, 255, 255, 0.9);
+                padding: 8px 12px;
+                border-radius: 8px;
+                margin: 10px 0;
+                color: #2d3436;
+                font-weight: bold;
+            ">
+            Showing stocks {start_idx + 1}-{end_idx} of {total_items}:
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Display stocks for current page in white containers
             for i in range(start_idx, end_idx):
                 symbol = unique_symbols[i]
                 company_name = symbol_to_name.get(symbol, symbol)
                 
                 col1, col2 = st.columns([3, 1])
                 with col1:
-                    st.markdown(f"**{symbol}** - {company_name}")
+                    st.markdown(f"""
+                    <div style="
+                        background: rgba(255, 255, 255, 0.95);
+                        padding: 8px 12px;
+                        border-radius: 8px;
+                        color: #2d3436;
+                        margin: 3px 0;
+                        border-left: 3px solid #f093fb;
+                    ">
+                    <strong>{symbol}</strong> - {company_name}
+                    </div>
+                    """, unsafe_allow_html=True)
                 with col2:
                     if st.button("➕", key=f"browse_add_{symbol}", help="Add to portfolio"):
                         if symbol not in st.session_state.stock_basket:
                             st.session_state.stock_basket.append(symbol)
                             st.success(f"Added {symbol}!")
                             st.rerun()
-        
-            st.markdown("</div>", unsafe_allow_html=True)  # Close discovery container
-        
+
+    # Close the right column gradient container
+    st.markdown("</div>", unsafe_allow_html=True)
+            
         elif discovery_method == "🔍 Search Stocks":
             st.markdown("**Find companies by name or ticker:**")
             
