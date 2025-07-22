@@ -1827,7 +1827,7 @@ def create_user_friendly_stock_selection(unique_symbols):
                             st.rerun()
     
     # Return selection
-    if st.session_state.stock_basket
+    if st.session_state.stock_basket:
         return st.session_state.stock_basket
     else:
         # Default fallback
