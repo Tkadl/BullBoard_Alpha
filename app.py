@@ -1799,8 +1799,6 @@ def main():
     # Add some spacing after metrics
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Stock Selection
-    st.markdown('<div class="section-header"><span class="section-icon">🎯</span><h2>Stock Selection</h2></div>', unsafe_allow_html=True)
 
     @st.cache_data
     def get_processed_symbols(_df):
