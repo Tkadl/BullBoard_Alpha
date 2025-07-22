@@ -1481,8 +1481,6 @@ def create_user_friendly_stock_selection(unique_symbols):
     
     symbol_to_name = get_complete_symbol_name_mapping()
     
-    # Single clear header
-    st.markdown("*Build your portfolio using categories, search, or browse*")
     
     # Create 2-column layout
     left_col, right_col = st.columns([35, 65])
