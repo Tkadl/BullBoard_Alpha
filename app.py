@@ -1588,8 +1588,6 @@ def create_user_friendly_stock_selection(unique_symbols):
                 "💰 Dividends": ['JNJ', 'PG', 'KO', 'PEP', 'MCD', 'WMT']
             }
             
-                        # Display categories in a 2x4 grid with better spacing
-            st.markdown("**One-click portfolio themes:**")
             
             # Create columns with medium gap for better spacing
             col1, col2 = st.columns([1, 1], gap="medium")
