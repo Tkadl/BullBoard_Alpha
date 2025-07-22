@@ -1504,15 +1504,54 @@ def create_user_friendly_stock_selection(unique_symbols):
                         st.session_state.stock_basket.remove(symbol)
                         st.rerun()
             
-            # Action buttons
+            # Portfolio status and actions
             st.markdown("---")
+            
+            # Enhanced status badge
+            portfolio_size = len(st.session_state.stock_basket)
+            if portfolio_size <= 3:
+                status_color = "🟡"
+                status_text = "Small portfolio"
+            elif portfolio_size <= 6:
+                status_color = "🟢"
+                status_text = "Good diversity"
+            else:
+                status_color = "🔵"
+                status_text = "Well diversified"
+            
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(90deg, #4CAF50, #45a049);
+                padding: 12px;
+                border-radius: 10px;
+                text-align: center;
+                color: white;
+                font-weight: bold;
+                margin: 10px 0;
+            ">
+            {status_color} {portfolio_size} stocks selected - {status_text}
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Action buttons
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("🗑️ Clear All", key="clear_basket"):
                     st.session_state.stock_basket = []
                     st.rerun()
             with col2:
-                st.success(f"✅ Ready to analyze {len(st.session_state.stock_basket)} stocks!")
+                st.markdown(f"""
+                <div style="
+                    background: #28a745;
+                    padding: 8px 12px;
+                    border-radius: 8px;
+                    text-align: center;
+                    color: white;
+                    font-weight: bold;
+                ">
+                ✅ Ready to Analyze!
+                </div>
+                """, unsafe_allow_html=True)
         else:
             st.info("👈 Select stocks from the categories or search")
             st.markdown("**Quick start suggestions:**")
@@ -1549,8 +1588,11 @@ def create_user_friendly_stock_selection(unique_symbols):
                 "💰 Dividends": ['JNJ', 'PG', 'KO', 'PEP', 'MCD', 'WMT']
             }
             
-            # Display in 2 columns
-            col1, col2 = st.columns(2)
+                        # Display categories in a 2x4 grid with better spacing
+            st.markdown("**One-click portfolio themes:**")
+            
+            # Create columns with medium gap for better spacing
+            col1, col2 = st.columns([1, 1], gap="medium")
             category_items = list(categories.items())
             
             for i in range(0, len(category_items), 2):
@@ -1558,7 +1600,9 @@ def create_user_friendly_stock_selection(unique_symbols):
                     if i < len(category_items):
                         name, stocks = category_items[i]
                         available = len([s for s in stocks if s in unique_symbols])
-                        if st.button(f"{name}\n({available} stocks)", key=f"cat_{i}"):
+                        if st.button(f"{name}\n({available} stocks)", 
+                                    key=f"cat_{i}",
+                                    use_container_width=True):
                             added = 0
                             for symbol in stocks:
                                 if symbol not in st.session_state.stock_basket and symbol in unique_symbols:
@@ -1572,7 +1616,9 @@ def create_user_friendly_stock_selection(unique_symbols):
                     if i + 1 < len(category_items):
                         name, stocks = category_items[i + 1]
                         available = len([s for s in stocks if s in unique_symbols])
-                        if st.button(f"{name}\n({available} stocks)", key=f"cat_{i+1}"):
+                        if st.button(f"{name}\n({available} stocks)", 
+                                    key=f"cat_{i+1}",
+                                    use_container_width=True):
                             added = 0
                             for symbol in stocks:
                                 if symbol not in st.session_state.stock_basket and symbol in unique_symbols:
@@ -1581,6 +1627,9 @@ def create_user_friendly_stock_selection(unique_symbols):
                             if added > 0:
                                 st.success(f"Added {added} stocks!")
                                 st.rerun()
+                
+                # Add small spacing between button rows
+                st.markdown("")
         
         elif discovery_method == "🔍 Search Stocks":
             st.markdown("**Find companies by name or ticker:**")
