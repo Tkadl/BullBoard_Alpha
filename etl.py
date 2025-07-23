@@ -278,15 +278,12 @@ def main():
     rolling_drawdown_days = 63
     
     try:
-        # Conditional S&P 500 test - ONLY run in production mode
+        # Conditional S&P 500 test
         if not skip_sp500_test:
             print("Step 1: Fetching S&P 500 symbols...")
             tickers = get_sp500_symbols()  # Only runs in production mode
             print(f"✅ Successfully got {len(tickers)} symbols")
             print(f"First 10 symbols: {tickers[:10]}")
-        else:
-            print("Step 1: Skipping S&P 500 fetch (debug mode)")
-            print(f"✅ Using debug tickers: {tickers}")
         
         # Test single stock fetch with actual first ticker
         print(f"\nStep 2: Testing single stock fetch...")
@@ -414,42 +411,7 @@ def main():
 
         if good_dfs:
             df = pd.concat(good_dfs, ignore_index=True)
-            # Handle MultiIndex columns that yfinance now returns
-            print(f"🔍 DataFrame columns before selection: {list(df.columns)}")
-            
-            # Check if we have MultiIndex columns and flatten them
-            if hasattr(df.columns, 'nlevels') and df.columns.nlevels > 1:
-                print("📊 Flattening MultiIndex columns...")
-                # Create a mapping of old to new column names
-                new_columns = []
-                for col in df.columns:
-                    if isinstance(col, tuple):
-                        if col[1] in ['Open', 'High', 'Low', 'Close', 'Volume']:
-                            new_columns.append(col[1])  # Use just the price type (Open, High, etc.)
-                        elif col[0] in ['symbol', 'Date']:
-                            new_columns.append(col[0])  # Use symbol or Date
-                        else:
-                            new_columns.append('_'.join([str(x) for x in col if x]))  # Join tuple elements
-                    else:
-                        new_columns.append(col)
-                
-                df.columns = new_columns
-                print(f"✅ Flattened columns: {list(df.columns)}")
-            
-            # Now try to select the columns we need
-            try:
-                df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
-                print("✅ Column selection successful")
-            except KeyError as e:
-                print(f"❌ Column selection failed: {e}")
-                print(f"Available columns: {list(df.columns)}")
-                # Select whatever columns we can find
-                available_cols = ['symbol', 'Date']
-                for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
-                    if col in df.columns:
-                        available_cols.append(col)
-                df = df[available_cols]
-                print(f"✅ Selected available columns: {available_cols}")
+            df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
         else:
             print("No data fetched — check your internet connection and ticker list.")
             return
