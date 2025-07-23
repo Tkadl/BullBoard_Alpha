@@ -1862,6 +1862,46 @@ def main():
     
     # Load and validate data with caching
     df = load_and_validate_data()
+    # === ADD THIS DEBUG SECTION HERE ===
+    print("=== DEBUG: DATA LOADING RESULT ===")
+    try:
+        import os
+        print(f"Current directory: {os.getcwd()}")
+        print(f"Files in directory: {os.listdir('.')}")
+        
+        if os.path.exists('latest_results.csv'):
+            print("✅ latest_results.csv EXISTS")
+            file_size = os.path.getsize('latest_results.csv')
+            print(f"File size: {file_size:,} bytes")
+            
+            # Check what load_and_validate_data() actually returned
+            print(f"df is None: {df is None}")
+            if df is not None:
+                print(f"DataFrame shape: {df.shape}")
+                print(f"Columns: {list(df.columns)}")
+                print(f"Sample data:")
+                print(df.head())
+                print(f"Unique symbols: {df['symbol'].nunique() if 'symbol' in df.columns else 'NO SYMBOL COLUMN'}")
+            else:
+                print("❌ load_and_validate_data() returned None")
+                
+                # Try loading manually to see what fails
+                try:
+                    df_test = pd.read_csv('latest_results.csv', parse_dates=["Date"])
+                    print(f"Manual load successful: {df_test.shape}")
+                    print(f"Manual load columns: {list(df_test.columns)}")
+                except Exception as manual_error:
+                    print(f"Manual load also failed: {manual_error}")
+            
+        else:
+            print("❌ latest_results.csv NOT FOUND")
+            
+    except Exception as e:
+        print(f"❌ Debug error: {e}")
+        import traceback
+        traceback.print_exc()
+    print("=== END DEBUG ===")
+    # === END DEBUG SECTION ===
     if df is None:
         st.error("Failed to load data. Please refresh the data first.")
         st.stop()
