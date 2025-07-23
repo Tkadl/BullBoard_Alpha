@@ -371,7 +371,6 @@ def main():
         for batch_num, batch in enumerate(batches, 1):
             print(f"Processing batch {batch_num}/{total_batches} ({len(batch)} symbols)...")
             
-            # Use your existing yf.download logic for now (we can add retry later)
             try:
                 raw = yf.download(batch, start=start_date, end=end_date, 
                                 group_by='ticker', auto_adjust=True, prepost=True, threads=True)
@@ -415,6 +414,11 @@ def main():
                         print(f"Error processing {ticker}: {e}")
                         bad_tickers.append(ticker)
                         continue
+                        
+            except Exception as e:
+                print(f"Error in batch {batch_num}: {e}")
+                bad_tickers.extend(batch)
+                continue
             
             # Add delay between batches
             if batch_num < total_batches:
