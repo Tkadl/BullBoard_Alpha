@@ -464,7 +464,7 @@ def main():
                         print(f"🔍 Processing ticker: {ticker}")
                         
                         # Handle single vs multi-ticker batch downloads
-                       if len(batch) == 1:
+                        if len(batch) == 1:
                             # Single ticker - but still may have MultiIndex columns
                             temp = raw.copy()
                             print(f"🔍 Single ticker batch - original columns: {list(temp.columns)}")
