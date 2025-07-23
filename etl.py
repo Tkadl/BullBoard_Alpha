@@ -6,117 +6,35 @@ import numpy as np
 from datetime import datetime, date
 import time  # Add this import
 
-def get_market_aware_dates():
-    """Get trading dates that account for market schedules"""
-    import pandas as pd
-    from datetime import datetime, timedelta
-    import pytz
+def fetch_with_retry(tickers_batch, start_date, end_date, max_retries=3, base_delay=3):
+    """
+    Fetch data with retry logic for rate limiting
+    """
+    for attempt in range(max_retries):
+        try:
+            print(f"Attempt {attempt + 1} for batch: {tickers_batch}")
+            raw = yf.download(
+                tickers_batch, 
+                start=start_date, 
+                end=end_date, 
+                group_by='ticker',
+                auto_adjust=True,
+                prepost=True,
+                threads=True
+            )
+            return raw, []  # Return data and empty failed list
+        except Exception as e:
+            print(f"Attempt {attempt + 1} failed for {tickers_batch}: {e}")
+            if attempt == max_retries - 1:
+                print(f"All attempts failed for batch: {tickers_batch}")
+                return None, tickers_batch  # Return None and failed tickers
+            
+            # Exponential backoff
+            sleep_time = base_delay * (2 ** attempt)
+            print(f"Waiting {sleep_time} seconds before retry...")
+            time.sleep(sleep_time)
     
-    try:
-        # Use market timezone (NYSE)
-        market_tz = pytz.timezone('America/New_York')
-        now_market = datetime.now(market_tz)
-        
-        # Market closes at 4 PM ET
-        market_close_today = now_market.replace(hour=16, minute=0, second=0, microsecond=0)
-        
-        # If it's before market close today, use yesterday as end date
-        if now_market < market_close_today:
-            end_date = (now_market - timedelta(days=1)).strftime('%Y-%m-%d')
-        else:
-            end_date = now_market.strftime('%Y-%m-%d')
-        
-        # Account for weekends - if end_date is weekend, go to Friday
-        end_datetime = pd.to_datetime(end_date)
-        if end_datetime.weekday() >= 5:  # Saturday=5, Sunday=6
-            days_back = end_datetime.weekday() - 4  # Go back to Friday
-            end_date = (end_datetime - timedelta(days=days_back)).strftime('%Y-%m-%d')
-        
-        start_date = "2024-01-01"  # Your existing start date
-        
-        print(f"📅 Market-aware dates: {start_date} to {end_date} (Market TZ: {now_market.strftime('%Y-%m-%d %H:%M %Z')})")
-        
-        return start_date, end_date, market_tz
-        
-    except Exception as e:
-        print(f"⚠️ Error in market date calculation, falling back to simple dates: {e}")
-        # Fallback to your existing logic
-        from datetime import date
-        start_date = "2024-01-01"
-        end_date = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")  # Use yesterday
-        return start_date, end_date, None
-
-    def classify_error(error):
-        """Classify errors to determine retry strategy"""
-        error_str = str(error).lower()
-        
-        if 'delisted' in error_str or 'timezone' in error_str:
-            return 'DELISTED'
-        elif 'rate limit' in error_str or 'too many requests' in error_str:
-            return 'RATE_LIMIT'
-        elif 'connection' in error_str or 'timeout' in error_str:
-            return 'NETWORK'
-        elif 'invalid' in error_str or 'not found' in error_str:
-            return 'INVALID_SYMBOL'
-        else:
-            return 'UNKNOWN'
-    
-    def fetch_with_retry(tickers_batch, start_date, end_date, max_retries=5, base_delay=3):
-        """
-        Advanced retry with exponential backoff and error classification
-        """
-        import random
-        
-        for attempt in range(max_retries):
-            try:
-                # Add jitter to prevent thundering herd (multiple requests at exact same time)
-                if attempt > 0:
-                    jitter = random.uniform(0.5, 1.5)  # Random multiplier between 0.5x and 1.5x
-                    base_delay_calc = 2 ** attempt  # Exponential backoff: 2, 4, 8, 16 seconds
-                    sleep_time = base_delay_calc * jitter
-                    print(f"  ⏳ Retry {attempt + 1}/{max_retries}: waiting {sleep_time:.1f}s...")
-                    time.sleep(sleep_time)
-                
-                print(f"  📡 Attempt {attempt + 1}/{max_retries} for: {tickers_batch}")
-                raw = yf.download(
-                    tickers_batch, 
-                    start=start_date, 
-                    end=end_date, 
-                    group_by='ticker',
-                    auto_adjust=True,
-                    prepost=True,
-                    threads=True,
-                    progress=False  # Suppress yfinance progress bars
-                )
-                
-                # Validate the downloaded data
-                if raw is None or raw.empty:
-                    raise ValueError("Empty data returned from yfinance")
-                    
-                print(f"  ✅ Success on attempt {attempt + 1}")
-                return raw, []  # Success - return data and empty failed list
-                
-            except Exception as e:
-                error_type = classify_error(e)
-                print(f"  ❌ Attempt {attempt + 1} failed: {error_type} - {str(e)[:100]}...")
-                
-                # Don't retry on permanent failures - save time!
-                if error_type in ['DELISTED', 'INVALID_SYMBOL']:
-                    print(f"  ⏭️  Permanent failure ({error_type}) - not retrying")
-                    return None, tickers_batch
-                
-                # For rate limiting, wait extra long
-                if error_type == 'RATE_LIMIT' and attempt < max_retries - 1:
-                    extra_wait = 10 + (attempt * 5)  # 10, 15, 20, 25 seconds extra
-                    print(f"  🐌 Rate limited - extra wait: {extra_wait}s")
-                    time.sleep(extra_wait)
-                
-                # Last attempt
-                if attempt == max_retries - 1:
-                    print(f"  ❌ All {max_retries} attempts failed for: {tickers_batch}")
-                    return None, tickers_batch
-        
-        return None, tickers_batch
+    return None, tickers_batch
 
 def validate_data_quality(df, min_days_needed=65):
     """Basic data validation and anomaly detection"""
@@ -461,66 +379,31 @@ def main():
                 # Process each ticker in the batch
                 for ticker in batch:
                     try:
-                        print(f"🔍 Processing ticker: {ticker}")
-                        
-                        # Handle single vs multi-ticker batch downloads
                         if len(batch) == 1:
-                            # Single ticker - but still may have MultiIndex columns
                             temp = raw.copy()
-                            print(f"🔍 Single ticker batch - original columns: {list(temp.columns)}")
-                            
-                            # Flatten MultiIndex columns if they exist
-                            if hasattr(temp.columns, 'nlevels') and temp.columns.nlevels > 1:
-                                # Extract just the price column names (second level of MultiIndex)
-                                temp.columns = [col[1] if isinstance(col, tuple) else col for col in temp.columns]
-                                print(f"🔍 Flattened columns: {list(temp.columns)}")
                         else:
-                            # Multi-ticker batch - raw data has MultiIndex columns
-                            if hasattr(raw.columns, 'nlevels') and raw.columns.nlevels > 1:
-                                # Extract just this ticker's data from MultiIndex
-                                try:
-                                    temp = raw[ticker].copy()  # This extracts the ticker's columns
-                                    print(f"🔍 MultiIndex extraction for {ticker} - columns: {list(temp.columns)}")
-                                except KeyError:
-                                    print(f"❌ {ticker} not found in MultiIndex data")
-                                    bad_tickers.append(ticker)
-                                    continue
-                            else:
-                                # Shouldn't happen, but fallback
-                                temp = raw[ticker].copy()
-                                print(f"🔍 Fallback extraction for {ticker}")
-                        
-                        # Now temp should have simple columns like ['Open', 'High', 'Low', 'Close', 'Volume']
-                        print(f"🔍 Final columns for {ticker}: {list(temp.columns)}")
-                        
-                        # Validate we have the essential columns
-                        essential_cols = ['Open', 'High', 'Low', 'Close', 'Volume']
-                        missing_cols = [col for col in essential_cols if col not in temp.columns]
-                        if missing_cols:
-                            print(f"❌ {ticker}: Missing columns {missing_cols}")
-                            bad_tickers.append(ticker)
-                            continue
+                            temp = raw[ticker].copy()
                             
                         if temp.empty or len(temp) < min_days_needed:
-                            print(f"❌ {ticker}: Insufficient data ({len(temp)} rows)")
                             bad_tickers.append(ticker)
                             continue
                             
-                        # Add symbol and date columns
                         temp['symbol'] = ticker
                         temp['Date'] = temp.index
-                        temp = temp.reset_index(drop=True)
+                        good_dfs.append(temp.reset_index(drop=True))
                         
-                        print(f"✅ {ticker}: {len(temp)} rows processed successfully")
-                        print(f"✅ Final structure: {list(temp.columns)}")
-                        good_dfs.append(temp)
-                        
-                    except Exception as e:
-                        print(f"❌ Error processing {ticker}: {e}")
-                        import traceback
-                        traceback.print_exc()
+                    except KeyError:
                         bad_tickers.append(ticker)
                         continue
+                    except Exception as e:
+                        print(f"Error processing {ticker}: {e}")
+                        bad_tickers.append(ticker)
+                        continue
+                        
+            except Exception as e:
+                print(f"Error in batch {batch_num}: {e}")
+                bad_tickers.extend(batch)
+                continue
             
             # Add delay between batches
             if batch_num < total_batches:
@@ -528,33 +411,10 @@ def main():
         
         print(f"Successfully fetched: {len(good_dfs)} symbols")
         print(f"Failed to fetch: {len(bad_tickers)} symbols")
-        
+
         if good_dfs:
             df = pd.concat(good_dfs, ignore_index=True)
-            
-            # DEBUG: Check what columns we actually have
-            print(f"🔍 DEBUG: Available columns: {list(df.columns)}")
-            print(f"🔍 DEBUG: DataFrame shape: {df.shape}")
-            print(f"🔍 DEBUG: Sample data:")
-            print(df.head())
-            
-            # The issue is that good_dfs already contain properly formatted data!
-            # Let's check if our individual DataFrames from good_dfs are already correct
-            print(f"🔍 DEBUG: Sample from first good_dfs DataFrame:")
-            if good_dfs:
-                print(good_dfs[0].head())
-                print(f"🔍 DEBUG: Columns in first good_dfs: {list(good_dfs[0].columns)}")
-            
-            # Check if we already have the right columns
-            expected_columns = ['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']
-            if all(col in df.columns for col in expected_columns):
-                print("✅ All expected columns found - proceeding normally")
-                df = df[expected_columns]
-            else:
-                print("❌ Column structure issue - the problem is in how we process individual tickers")
-                print("🔧 This means the issue is in the batch processing loop, not here")
-                return
-                
+            df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
         else:
             print("No data fetched — check your internet connection and ticker list.")
             return
@@ -562,23 +422,26 @@ def main():
         # TIMESTAMP DATA DOWNLOAD
         download_time = datetime.now()
         df['download_time'] = download_time.strftime('%Y-%m-%d %H:%M')
-        
-        # DATA VALIDATION BEFORE CALC
-        bad_symbols = []
-        for sym, group in df.groupby('symbol'):
-            if group.shape[0] < min_days_needed:
-                bad_symbols.append(sym)
-        df = df[~df['symbol'].isin(bad_symbols)]
-        
-        # ROLLING ANALYTICS
-        df = df.sort_values(['symbol', 'Date']).reset_index(drop=True)
-        df['daily_return'] = df.groupby('symbol')['Close'].pct_change(fill_method=None)
-        df['volatility_21'] = df.groupby('symbol')['daily_return'].rolling(rolling_vol_days).std().reset_index(0, drop=True)
-        df['rolling_yield_21'] = df.groupby('symbol')['daily_return'].rolling(rolling_vol_days).mean().reset_index(0, drop=True)
-        df['sharpe_21'] = (df['rolling_yield_21'] / df['volatility_21']) * np.sqrt(252)
-        df['max_drawdown_63'] = df.groupby('symbol')['Close'].rolling(rolling_drawdown_days)\
-            .apply(lambda x: (np.max(x) - np.min(x)) / np.max(x) if len(x) > 0 and np.max(x) != 0 else 0, raw=False)\
-            .reset_index(0, drop=True)
+
+    # [Rest of your existing code for data processing, validation, and saving remains exactly the same]
+    
+    # DATA VALIDATION BEFORE CALC
+    bad_symbols = []
+    for sym, group in df.groupby('symbol'):
+        if group.shape[0] < min_days_needed:
+            bad_symbols.append(sym)
+    df = df[~df['symbol'].isin(bad_symbols)]
+
+    # ROLLING ANALYTICS
+    df = df.sort_values(['symbol', 'Date']).reset_index(drop=True)
+    df['daily_return'] = df.groupby('symbol')['Close'].pct_change(fill_method=None)
+    df['volatility_21'] = df.groupby('symbol')['daily_return'].rolling(rolling_vol_days).std().reset_index(0, drop=True)
+    df['rolling_yield_21'] = df.groupby('symbol')['daily_return'].rolling(rolling_vol_days).mean().reset_index(0, drop=True)
+    df['sharpe_21'] = (df['rolling_yield_21'] / df['volatility_21']) * np.sqrt(252)
+    df['max_drawdown_63'] = df.groupby('symbol')['Close'].rolling(rolling_drawdown_days)\
+        .apply(lambda x: (np.max(x) - np.min(x)) / np.max(x) if len(x) > 0 and np.max(x) != 0 else 0, raw=False)\
+        .reset_index(0, drop=True)
+    df['custom_risk_score'] = df['volatility_21'] * 0.7 + df['max_drawdown_63'] * 0.3
 
     # Get each stock's latest analytics
     latest = df.sort_values('Date').groupby('symbol').tail(1)
