@@ -324,7 +324,6 @@ def main():
     can_do_incremental, reason = should_do_incremental_update(last_date, existing_symbols, tickers)
     print(f"Update decision: {reason}")
     
-    # Continue with your existing if/else logic...
     if can_do_incremental:
         print("=== PERFORMING INCREMENTAL UPDATE ===")
         
@@ -355,88 +354,88 @@ def main():
         else:
             print("No new data fetched - using existing data")
             df = existing_df
-
-  else:
-    print("=== PERFORMING FULL REFRESH ===")
-    print(f"Fetching data for {len(tickers)} symbols...")
     
-    good_dfs = []
-    bad_tickers = []
-
-    # Create batches
-    batches = [tickers[i:i + batch_size] for i in range(0, len(tickers), batch_size)]
-    total_batches = len(batches)
-    start_time = datetime.now()
-    
-    for batch_num, batch in enumerate(batches, 1):
-        print(f"Processing batch {batch_num}/{total_batches} ({len(batch)} symbols)...")
-        
-        try:
-            raw = yf.download(batch, start=start_date, end=end_date, 
-                            group_by='ticker', auto_adjust=True, prepost=True, threads=True)
-            
-            # Process each ticker in the batch
-            for ticker in batch:
-                try:
-                    if len(batch) == 1:
-                        temp = raw.copy()
-                    else:
-                        temp = raw[ticker].copy()
-                        
-                    if temp.empty or len(temp) < min_days_needed:
-                        bad_tickers.append(ticker)
-                        continue
-                    
-                    # Handle MultiIndex columns that yfinance sometimes creates
-                    if isinstance(temp.columns, pd.MultiIndex):
-                        # Flatten MultiIndex columns - take the first level (the actual column names)
-                        temp.columns = [col[0] if isinstance(col, tuple) else col for col in temp.columns]
-                    
-                    # Reset index to make Date a column first
-                    temp = temp.reset_index()
-                    
-                    # Add symbol column
-                    temp['symbol'] = ticker
-                    
-                    # Ensure we have the expected columns before appending
-                    expected_cols = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume']
-                    if all(col in temp.columns for col in expected_cols):
-                        good_dfs.append(temp)
-                    else:
-                        print(f"Missing expected columns for {ticker}. Available: {temp.columns.tolist()}")
-                        bad_tickers.append(ticker)
-                        continue
-                    
-                except KeyError:
-                    bad_tickers.append(ticker)
-                    continue
-                except Exception as e:
-                    print(f"Error processing {ticker}: {e}")
-                    bad_tickers.append(ticker)
-                    continue
-                    
-        except Exception as e:
-            print(f"Error in batch {batch_num}: {e}")
-            bad_tickers.extend(batch)
-            continue
-        
-        # Add delay between batches
-        if batch_num < total_batches:
-            time.sleep(delay_between_batches)
-    
-    print(f"Successfully fetched: {len(good_dfs)} symbols")
-    print(f"Failed to fetch: {len(bad_tickers)} symbols")
-
-    if good_dfs:
-        df = pd.concat(good_dfs, ignore_index=True)
-        df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
     else:
-        print("No data fetched — check your internet connection and ticker list.")
-        return
+        print("=== PERFORMING FULL REFRESH ===")
+        print(f"Fetching data for {len(tickers)} symbols...")
         
-    # TIMESTAMP DATA DOWNLOAD
-    download_time = datetime.now()
-    df['download_time'] = download_time.strftime('%Y-%m-%d %H:%M')
+        good_dfs = []
+        bad_tickers = []
+    
+        # Create batches
+        batches = [tickers[i:i + batch_size] for i in range(0, len(tickers), batch_size)]
+        total_batches = len(batches)
+        start_time = datetime.now()
+        
+        for batch_num, batch in enumerate(batches, 1):
+            print(f"Processing batch {batch_num}/{total_batches} ({len(batch)} symbols)...")
+            
+            try:
+                raw = yf.download(batch, start=start_date, end=end_date, 
+                                group_by='ticker', auto_adjust=True, prepost=True, threads=True)
+                
+                # Process each ticker in the batch
+                for ticker in batch:
+                    try:
+                        if len(batch) == 1:
+                            temp = raw.copy()
+                        else:
+                            temp = raw[ticker].copy()
+                            
+                        if temp.empty or len(temp) < min_days_needed:
+                            bad_tickers.append(ticker)
+                            continue
+                        
+                        # Handle MultiIndex columns that yfinance sometimes creates
+                        if isinstance(temp.columns, pd.MultiIndex):
+                            # Flatten MultiIndex columns - take the first level (the actual column names)
+                            temp.columns = [col[0] if isinstance(col, tuple) else col for col in temp.columns]
+                        
+                        # Reset index to make Date a column first
+                        temp = temp.reset_index()
+                        
+                        # Add symbol column
+                        temp['symbol'] = ticker
+                        
+                        # Ensure we have the expected columns before appending
+                        expected_cols = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume']
+                        if all(col in temp.columns for col in expected_cols):
+                            good_dfs.append(temp)
+                        else:
+                            print(f"Missing expected columns for {ticker}. Available: {temp.columns.tolist()}")
+                            bad_tickers.append(ticker)
+                            continue
+                        
+                    except KeyError:
+                        bad_tickers.append(ticker)
+                        continue
+                    except Exception as e:
+                        print(f"Error processing {ticker}: {e}")
+                        bad_tickers.append(ticker)
+                        continue
+                        
+            except Exception as e:
+                print(f"Error in batch {batch_num}: {e}")
+                bad_tickers.extend(batch)
+                continue
+            
+            # Add delay between batches
+            if batch_num < total_batches:
+                time.sleep(delay_between_batches)
+        
+        print(f"Successfully fetched: {len(good_dfs)} symbols")
+        print(f"Failed to fetch: {len(bad_tickers)} symbols")
+    
+        if good_dfs:
+            df = pd.concat(good_dfs, ignore_index=True)
+            df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
+        else:
+            print("No data fetched — check your internet connection and ticker list.")
+            return
+            
+        # TIMESTAMP DATA DOWNLOAD
+        download_time = datetime.now()
+        df['download_time'] = download_time.strftime('%Y-%m-%d %H:%M')
     
     # DATA VALIDATION BEFORE CALC
     bad_symbols = []
