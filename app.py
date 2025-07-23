@@ -1924,10 +1924,6 @@ def main():
     print("=== END DEBUG ===")
     # === END DEBUG SECTION ===
     if df is None:
-       if df is not None and not df.empty:
-    st.success(f"✅ **Data loaded successfully!** {len(df)} records from {df['symbol'].nunique()} stocks")
-    else:
-    st.warning("⚠️ Data loaded but appears to be empty")
         st.error("❌ **No data available**")
         st.info("""
         **Possible solutions:**
@@ -1936,6 +1932,12 @@ def main():
         3. Verify the CSV file has the correct format
         """)
         st.stop()
+    
+    # Add data info display with error checking
+    if df is not None and not df.empty:
+        st.success(f"✅ **Data loaded successfully!** {len(df)} records from {df['symbol'].nunique()} stocks")
+    else:
+        st.warning("⚠️ Data loaded but appears to be empty")
         
    # Data info section with improved metric cards
     st.markdown('<div class="section-header"><span class="section-icon">📊</span><h2>Market Overview</h2></div>', unsafe_allow_html=True)
