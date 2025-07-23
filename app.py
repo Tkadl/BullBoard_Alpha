@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 import datetime
+import os
 TRANSFORMERS_AVAILABLE = False
 pipeline = None
 
