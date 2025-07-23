@@ -6,6 +6,46 @@ import numpy as np
 from datetime import datetime, date
 import time  # Add this import
 
+def get_market_aware_dates():
+    """Get trading dates that account for market schedules"""
+    import pandas as pd
+    from datetime import datetime, timedelta
+    import pytz
+    
+    try:
+        # Use market timezone (NYSE)
+        market_tz = pytz.timezone('America/New_York')
+        now_market = datetime.now(market_tz)
+        
+        # Market closes at 4 PM ET
+        market_close_today = now_market.replace(hour=16, minute=0, second=0, microsecond=0)
+        
+        # If it's before market close today, use yesterday as end date
+        if now_market < market_close_today:
+            end_date = (now_market - timedelta(days=1)).strftime('%Y-%m-%d')
+        else:
+            end_date = now_market.strftime('%Y-%m-%d')
+        
+        # Account for weekends - if end_date is weekend, go to Friday
+        end_datetime = pd.to_datetime(end_date)
+        if end_datetime.weekday() >= 5:  # Saturday=5, Sunday=6
+            days_back = end_datetime.weekday() - 4  # Go back to Friday
+            end_date = (end_datetime - timedelta(days=days_back)).strftime('%Y-%m-%d')
+        
+        start_date = "2024-01-01"  # Your existing start date
+        
+        print(f"📅 Market-aware dates: {start_date} to {end_date} (Market TZ: {now_market.strftime('%Y-%m-%d %H:%M %Z')})")
+        
+        return start_date, end_date, market_tz
+        
+    except Exception as e:
+        print(f"⚠️ Error in market date calculation, falling back to simple dates: {e}")
+        # Fallback to your existing logic
+        from datetime import date
+        start_date = "2024-01-01"
+        end_date = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")  # Use yesterday
+        return start_date, end_date, None
+
 def fetch_with_retry(tickers_batch, start_date, end_date, max_retries=3, base_delay=3):
     """
     Fetch data with retry logic for rate limiting
