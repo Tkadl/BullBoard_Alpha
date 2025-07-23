@@ -418,7 +418,18 @@ def main():
 
         if good_dfs:
             df = pd.concat(good_dfs, ignore_index=True)
-            df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
+            # Check what columns we actually have
+            print("Available columns:", df.columns.tolist())
+            
+            # Try to standardize column selection
+            try:
+                df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
+                print("✅ Column selection successful")
+            except KeyError as e:
+                print(f"❌ Column selection failed: {e}")
+                print("Available columns:", df.columns.tolist())
+                # Use whatever columns we have
+                df = df.reset_index(drop=True)
         else:
             print("No data fetched — check your internet connection and ticker list.")
             return
