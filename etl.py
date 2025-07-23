@@ -463,28 +463,29 @@ def main():
                     try:
                         print(f"🔍 Processing ticker: {ticker}")
                         
-                        # Extract ticker data from the raw download
+                        # Handle single vs multi-ticker batch downloads
                         if len(batch) == 1:
+                            # Single ticker - raw data has simple columns
                             temp = raw.copy()
                             print(f"🔍 Single ticker batch - columns: {list(temp.columns)}")
                         else:
-                            # For multi-ticker batches, we need to handle MultiIndex columns
+                            # Multi-ticker batch - raw data has MultiIndex columns
                             if hasattr(raw.columns, 'nlevels') and raw.columns.nlevels > 1:
-                                # MultiIndex columns - extract this ticker's data
-                                ticker_columns = [col for col in raw.columns if col[0] == ticker]
-                                if ticker_columns:
-                                    temp = raw[ticker_columns].copy()
-                                    # Flatten the column names (remove the ticker prefix)
-                                    temp.columns = [col[1] for col in temp.columns]
-                                    print(f"🔍 MultiIndex extraction for {ticker} - new columns: {list(temp.columns)}")
-                                else:
-                                    print(f"❌ No columns found for ticker {ticker}")
+                                # Extract just this ticker's data from MultiIndex
+                                try:
+                                    temp = raw[ticker].copy()  # This extracts the ticker's columns
+                                    print(f"🔍 MultiIndex extraction for {ticker} - columns: {list(temp.columns)}")
+                                except KeyError:
+                                    print(f"❌ {ticker} not found in MultiIndex data")
                                     bad_tickers.append(ticker)
                                     continue
                             else:
-                                # Regular columns
+                                # Shouldn't happen, but fallback
                                 temp = raw[ticker].copy()
-                                print(f"🔍 Regular extraction for {ticker} - columns: {list(temp.columns)}")
+                                print(f"🔍 Fallback extraction for {ticker}")
+                        
+                        # Now temp should have simple columns like ['Open', 'High', 'Low', 'Close', 'Volume']
+                        print(f"🔍 Final columns for {ticker}: {list(temp.columns)}")
                         
                         # Validate we have the essential columns
                         essential_cols = ['Open', 'High', 'Low', 'Close', 'Volume']
@@ -505,25 +506,15 @@ def main():
                         temp = temp.reset_index(drop=True)
                         
                         print(f"✅ {ticker}: {len(temp)} rows processed successfully")
+                        print(f"✅ Final structure: {list(temp.columns)}")
                         good_dfs.append(temp)
                         
                     except Exception as e:
                         print(f"❌ Error processing {ticker}: {e}")
+                        import traceback
+                        traceback.print_exc()
                         bad_tickers.append(ticker)
                         continue
-                        
-                    except KeyError:
-                        bad_tickers.append(ticker)
-                        continue
-                    except Exception as e:
-                        print(f"Error processing {ticker}: {e}")
-                        bad_tickers.append(ticker)
-                        continue
-                        
-            except Exception as e:
-                print(f"Error in batch {batch_num}: {e}")
-                bad_tickers.extend(batch)
-                continue
             
             # Add delay between batches
             if batch_num < total_batches:
