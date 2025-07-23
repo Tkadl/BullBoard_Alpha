@@ -46,35 +46,77 @@ def get_market_aware_dates():
         end_date = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")  # Use yesterday
         return start_date, end_date, None
 
-def fetch_with_retry(tickers_batch, start_date, end_date, max_retries=3, base_delay=3):
-    """
-    Fetch data with retry logic for rate limiting
-    """
-    for attempt in range(max_retries):
-        try:
-            print(f"Attempt {attempt + 1} for batch: {tickers_batch}")
-            raw = yf.download(
-                tickers_batch, 
-                start=start_date, 
-                end=end_date, 
-                group_by='ticker',
-                auto_adjust=True,
-                prepost=True,
-                threads=True
-            )
-            return raw, []  # Return data and empty failed list
-        except Exception as e:
-            print(f"Attempt {attempt + 1} failed for {tickers_batch}: {e}")
-            if attempt == max_retries - 1:
-                print(f"All attempts failed for batch: {tickers_batch}")
-                return None, tickers_batch  # Return None and failed tickers
-            
-            # Exponential backoff
-            sleep_time = base_delay * (2 ** attempt)
-            print(f"Waiting {sleep_time} seconds before retry...")
-            time.sleep(sleep_time)
+    def classify_error(error):
+        """Classify errors to determine retry strategy"""
+        error_str = str(error).lower()
+        
+        if 'delisted' in error_str or 'timezone' in error_str:
+            return 'DELISTED'
+        elif 'rate limit' in error_str or 'too many requests' in error_str:
+            return 'RATE_LIMIT'
+        elif 'connection' in error_str or 'timeout' in error_str:
+            return 'NETWORK'
+        elif 'invalid' in error_str or 'not found' in error_str:
+            return 'INVALID_SYMBOL'
+        else:
+            return 'UNKNOWN'
     
-    return None, tickers_batch
+    def fetch_with_retry(tickers_batch, start_date, end_date, max_retries=5, base_delay=3):
+        """
+        Advanced retry with exponential backoff and error classification
+        """
+        import random
+        
+        for attempt in range(max_retries):
+            try:
+                # Add jitter to prevent thundering herd (multiple requests at exact same time)
+                if attempt > 0:
+                    jitter = random.uniform(0.5, 1.5)  # Random multiplier between 0.5x and 1.5x
+                    base_delay_calc = 2 ** attempt  # Exponential backoff: 2, 4, 8, 16 seconds
+                    sleep_time = base_delay_calc * jitter
+                    print(f"  ⏳ Retry {attempt + 1}/{max_retries}: waiting {sleep_time:.1f}s...")
+                    time.sleep(sleep_time)
+                
+                print(f"  📡 Attempt {attempt + 1}/{max_retries} for: {tickers_batch}")
+                raw = yf.download(
+                    tickers_batch, 
+                    start=start_date, 
+                    end=end_date, 
+                    group_by='ticker',
+                    auto_adjust=True,
+                    prepost=True,
+                    threads=True,
+                    progress=False  # Suppress yfinance progress bars
+                )
+                
+                # Validate the downloaded data
+                if raw is None or raw.empty:
+                    raise ValueError("Empty data returned from yfinance")
+                    
+                print(f"  ✅ Success on attempt {attempt + 1}")
+                return raw, []  # Success - return data and empty failed list
+                
+            except Exception as e:
+                error_type = classify_error(e)
+                print(f"  ❌ Attempt {attempt + 1} failed: {error_type} - {str(e)[:100]}...")
+                
+                # Don't retry on permanent failures - save time!
+                if error_type in ['DELISTED', 'INVALID_SYMBOL']:
+                    print(f"  ⏭️  Permanent failure ({error_type}) - not retrying")
+                    return None, tickers_batch
+                
+                # For rate limiting, wait extra long
+                if error_type == 'RATE_LIMIT' and attempt < max_retries - 1:
+                    extra_wait = 10 + (attempt * 5)  # 10, 15, 20, 25 seconds extra
+                    print(f"  🐌 Rate limited - extra wait: {extra_wait}s")
+                    time.sleep(extra_wait)
+                
+                # Last attempt
+                if attempt == max_retries - 1:
+                    print(f"  ❌ All {max_retries} attempts failed for: {tickers_batch}")
+                    return None, tickers_batch
+        
+        return None, tickers_batch
 
 def validate_data_quality(df, min_days_needed=65):
     """Basic data validation and anomaly detection"""
