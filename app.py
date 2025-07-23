@@ -1840,8 +1840,17 @@ def main():
             file_size = os.path.getsize("latest_results.csv")
             print(f"📁 Loading CSV file: {file_size:,} bytes")  # Console log only
             
-            # Load data
-            df = pd.read_csv("latest_results.csv", parse_dates=["Date"])
+            # Load data WITHOUT automatic date parsing (this was causing the issue)
+            df = pd.read_csv("latest_results.csv")
+            
+            # Try to parse dates manually with error handling
+            try:
+                df['Date'] = pd.to_datetime(df['Date'])
+                print("✅ Date parsing successful")
+            except Exception as date_error:
+                print(f"⚠️ Date parsing failed: {date_error}")
+                # Keep the data anyway - dates as strings are still usable
+            
             print(f"✅ Loaded {len(df):,} records, {df['symbol'].nunique()} symbols")  # Console log only
             
             if df.empty or 'symbol' not in df.columns:
@@ -1858,6 +1867,8 @@ def main():
             return None
         except Exception as e:
             print(f"❌ Error loading data: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return None
     
     # Load and validate data with caching
