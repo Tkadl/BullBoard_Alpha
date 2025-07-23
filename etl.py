@@ -278,12 +278,15 @@ def main():
     rolling_drawdown_days = 63
     
     try:
-        # Conditional S&P 500 test
+        # Conditional S&P 500 test - ONLY run in production mode
         if not skip_sp500_test:
             print("Step 1: Fetching S&P 500 symbols...")
             tickers = get_sp500_symbols()  # Only runs in production mode
             print(f"✅ Successfully got {len(tickers)} symbols")
             print(f"First 10 symbols: {tickers[:10]}")
+        else:
+            print("Step 1: Skipping S&P 500 fetch (debug mode)")
+            print(f"✅ Using debug tickers: {tickers}")
         
         # Test single stock fetch with actual first ticker
         print(f"\nStep 2: Testing single stock fetch...")
