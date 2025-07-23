@@ -324,6 +324,7 @@ def main():
     can_do_incremental, reason = should_do_incremental_update(last_date, existing_symbols, tickers)
     print(f"Update decision: {reason}")
     
+    # Continue with your existing if/else logic...
     if can_do_incremental:
         print("=== PERFORMING INCREMENTAL UPDATE ===")
         
@@ -354,15 +355,15 @@ def main():
         else:
             print("No new data fetched - using existing data")
             df = existing_df
-    
+
     else:
         print("=== PERFORMING FULL REFRESH ===")
         print(f"Fetching data for {len(tickers)} symbols...")
         
         good_dfs = []
         bad_tickers = []
-    
-        # Create batches
+
+        # Create batches (this was missing!)
         batches = [tickers[i:i + batch_size] for i in range(0, len(tickers), batch_size)]
         total_batches = len(batches)
         start_time = datetime.now()
@@ -370,6 +371,7 @@ def main():
         for batch_num, batch in enumerate(batches, 1):
             print(f"Processing batch {batch_num}/{total_batches} ({len(batch)} symbols)...")
             
+            # Use your existing yf.download logic for now (we can add retry later)
             try:
                 raw = yf.download(batch, start=start_date, end=end_date, 
                                 group_by='ticker', auto_adjust=True, prepost=True, threads=True)
@@ -385,26 +387,10 @@ def main():
                         if temp.empty or len(temp) < min_days_needed:
                             bad_tickers.append(ticker)
                             continue
-                        
-                        # Handle MultiIndex columns that yfinance sometimes creates
-                        if isinstance(temp.columns, pd.MultiIndex):
-                            # Flatten MultiIndex columns - take the first level (the actual column names)
-                            temp.columns = [col[0] if isinstance(col, tuple) else col for col in temp.columns]
-                        
-                        # Reset index to make Date a column first
-                        temp = temp.reset_index()
-                        
-                        # Add symbol column
+                            
                         temp['symbol'] = ticker
-                        
-                        # Ensure we have the expected columns before appending
-                        expected_cols = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume']
-                        if all(col in temp.columns for col in expected_cols):
-                            good_dfs.append(temp)
-                        else:
-                            print(f"Missing expected columns for {ticker}. Available: {temp.columns.tolist()}")
-                            bad_tickers.append(ticker)
-                            continue
+                        temp['Date'] = temp.index
+                        good_dfs.append(temp.reset_index(drop=True))
                         
                     except KeyError:
                         bad_tickers.append(ticker)
@@ -426,30 +412,6 @@ def main():
         print(f"Successfully fetched: {len(good_dfs)} symbols")
         print(f"Failed to fetch: {len(bad_tickers)} symbols")
 
-        print("\n=== DEBUG: DETAILED DATA FETCH RESULTS ===")
-        if good_dfs:
-            print(f"Number of DataFrames collected: {len(good_dfs)}")
-            for i, df_sample in enumerate(good_dfs[:3]):  # Show first 3
-                print(f"DataFrame {i+1}: shape={df_sample.shape}, columns={df_sample.columns.tolist()}")
-                if 'symbol' in df_sample.columns:
-                    print(f"  Sample symbols: {df_sample['symbol'].unique()[:5].tolist()}")
-            
-            print("Attempting to concatenate DataFrames...")
-            try:
-                df = pd.concat(good_dfs, ignore_index=True)
-                print(f"✅ Concatenation successful: {df.shape}")
-                print(f"Columns after concat: {df.columns.tolist()}")
-                print(f"Sample data:")
-                print(df.head(2))
-            except Exception as concat_error:
-                print(f"❌ Concatenation failed: {concat_error}")
-                print("DataFrame shapes:", [gdf.shape for gdf in good_dfs[:5]])
-                return
-        else:
-            print("❌ No DataFrames to process")
-            return
-        print("=== END DEBUG ===\n")
-        
         if good_dfs:
             df = pd.concat(good_dfs, ignore_index=True)
             df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
@@ -460,6 +422,8 @@ def main():
         # TIMESTAMP DATA DOWNLOAD
         download_time = datetime.now()
         df['download_time'] = download_time.strftime('%Y-%m-%d %H:%M')
+
+    # [Rest of your existing code for data processing, validation, and saving remains exactly the same]
     
     # DATA VALIDATION BEFORE CALC
     bad_symbols = []
@@ -503,14 +467,6 @@ def main():
     output_path = "latest_results.csv"
     print("Attempting to save data to:", output_path)
     try:
-        print("\n=== DEBUG: FINAL DATA BEFORE SAVE ===")
-        print(f"Final DataFrame shape: {df.shape}")
-        print(f"Final columns: {df.columns.tolist()}")
-        print(f"Data types:")
-        print(df.dtypes)
-        print("Sample rows:")
-        print(df.head(3))
-        print("=== END DEBUG ===\n")
         df.to_csv(output_path, index=False)
         print("✅ Data saved. File size:", os.path.getsize(output_path), "bytes")
     except Exception as e:
