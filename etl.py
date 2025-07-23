@@ -425,7 +425,31 @@ def main():
         
         print(f"Successfully fetched: {len(good_dfs)} symbols")
         print(f"Failed to fetch: {len(bad_tickers)} symbols")
-    
+
+        print("\n=== DEBUG: DETAILED DATA FETCH RESULTS ===")
+        if good_dfs:
+            print(f"Number of DataFrames collected: {len(good_dfs)}")
+            for i, df_sample in enumerate(good_dfs[:3]):  # Show first 3
+                print(f"DataFrame {i+1}: shape={df_sample.shape}, columns={df_sample.columns.tolist()}")
+                if 'symbol' in df_sample.columns:
+                    print(f"  Sample symbols: {df_sample['symbol'].unique()[:5].tolist()}")
+            
+            print("Attempting to concatenate DataFrames...")
+            try:
+                df = pd.concat(good_dfs, ignore_index=True)
+                print(f"✅ Concatenation successful: {df.shape}")
+                print(f"Columns after concat: {df.columns.tolist()}")
+                print(f"Sample data:")
+                print(df.head(2))
+            except Exception as concat_error:
+                print(f"❌ Concatenation failed: {concat_error}")
+                print("DataFrame shapes:", [gdf.shape for gdf in good_dfs[:5]])
+                return
+        else:
+            print("❌ No DataFrames to process")
+            return
+        print("=== END DEBUG ===\n")
+        
         if good_dfs:
             df = pd.concat(good_dfs, ignore_index=True)
             df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
@@ -479,6 +503,14 @@ def main():
     output_path = "latest_results.csv"
     print("Attempting to save data to:", output_path)
     try:
+        print("\n=== DEBUG: FINAL DATA BEFORE SAVE ===")
+        print(f"Final DataFrame shape: {df.shape}")
+        print(f"Final columns: {df.columns.tolist()}")
+        print(f"Data types:")
+        print(df.dtypes)
+        print("Sample rows:")
+        print(df.head(3))
+        print("=== END DEBUG ===\n")
         df.to_csv(output_path, index=False)
         print("✅ Data saved. File size:", os.path.getsize(output_path), "bytes")
     except Exception as e:
