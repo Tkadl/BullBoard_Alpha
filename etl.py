@@ -387,10 +387,26 @@ def main():
                         if temp.empty or len(temp) < min_days_needed:
                             bad_tickers.append(ticker)
                             continue
-                            
+                        
+                        # Handle MultiIndex columns that yfinance sometimes creates
+                        if isinstance(temp.columns, pd.MultiIndex):
+                            # Flatten MultiIndex columns - take the first level (the actual column names)
+                            temp.columns = [col[0] if isinstance(col, tuple) else col for col in temp.columns]
+                        
+                        # Reset index to make Date a column first
+                        temp = temp.reset_index()
+                        
+                        # Add symbol column
                         temp['symbol'] = ticker
-                        temp['Date'] = temp.index
-                        good_dfs.append(temp.reset_index(drop=True))
+                        
+                        # Ensure we have the expected columns before appending
+                        expected_cols = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume']
+                        if all(col in temp.columns for col in expected_cols):
+                            good_dfs.append(temp)
+                        else:
+                            print(f"Missing expected columns for {ticker}. Available: {temp.columns.tolist()}")
+                            bad_tickers.append(ticker)
+                            continue
                         
                     except KeyError:
                         bad_tickers.append(ticker)
@@ -399,11 +415,6 @@ def main():
                         print(f"Error processing {ticker}: {e}")
                         bad_tickers.append(ticker)
                         continue
-                        
-            except Exception as e:
-                print(f"Error in batch {batch_num}: {e}")
-                bad_tickers.extend(batch)
-                continue
             
             # Add delay between batches
             if batch_num < total_batches:
