@@ -1924,7 +1924,10 @@ def main():
     print("=== END DEBUG ===")
     # === END DEBUG SECTION ===
     if df is None:
-        st.success(f"✅ **Data loaded successfully!** {len(df)} records from {df['symbol'].nunique()} stocks")
+       if df is not None and not df.empty:
+    st.success(f"✅ **Data loaded successfully!** {len(df)} records from {df['symbol'].nunique()} stocks")
+    else:
+    st.warning("⚠️ Data loaded but appears to be empty")
         st.error("❌ **No data available**")
         st.info("""
         **Possible solutions:**
