@@ -461,18 +461,56 @@ def main():
                 # Process each ticker in the batch
                 for ticker in batch:
                     try:
+                        print(f"🔍 Processing ticker: {ticker}")
+                        
+                        # Extract ticker data from the raw download
                         if len(batch) == 1:
                             temp = raw.copy()
+                            print(f"🔍 Single ticker batch - columns: {list(temp.columns)}")
                         else:
-                            temp = raw[ticker].copy()
-                            
-                        if temp.empty or len(temp) < min_days_needed:
+                            # For multi-ticker batches, we need to handle MultiIndex columns
+                            if hasattr(raw.columns, 'nlevels') and raw.columns.nlevels > 1:
+                                # MultiIndex columns - extract this ticker's data
+                                ticker_columns = [col for col in raw.columns if col[0] == ticker]
+                                if ticker_columns:
+                                    temp = raw[ticker_columns].copy()
+                                    # Flatten the column names (remove the ticker prefix)
+                                    temp.columns = [col[1] for col in temp.columns]
+                                    print(f"🔍 MultiIndex extraction for {ticker} - new columns: {list(temp.columns)}")
+                                else:
+                                    print(f"❌ No columns found for ticker {ticker}")
+                                    bad_tickers.append(ticker)
+                                    continue
+                            else:
+                                # Regular columns
+                                temp = raw[ticker].copy()
+                                print(f"🔍 Regular extraction for {ticker} - columns: {list(temp.columns)}")
+                        
+                        # Validate we have the essential columns
+                        essential_cols = ['Open', 'High', 'Low', 'Close', 'Volume']
+                        missing_cols = [col for col in essential_cols if col not in temp.columns]
+                        if missing_cols:
+                            print(f"❌ {ticker}: Missing columns {missing_cols}")
                             bad_tickers.append(ticker)
                             continue
                             
+                        if temp.empty or len(temp) < min_days_needed:
+                            print(f"❌ {ticker}: Insufficient data ({len(temp)} rows)")
+                            bad_tickers.append(ticker)
+                            continue
+                            
+                        # Add symbol and date columns
                         temp['symbol'] = ticker
                         temp['Date'] = temp.index
-                        good_dfs.append(temp.reset_index(drop=True))
+                        temp = temp.reset_index(drop=True)
+                        
+                        print(f"✅ {ticker}: {len(temp)} rows processed successfully")
+                        good_dfs.append(temp)
+                        
+                    except Exception as e:
+                        print(f"❌ Error processing {ticker}: {e}")
+                        bad_tickers.append(ticker)
+                        continue
                         
                     except KeyError:
                         bad_tickers.append(ticker)
