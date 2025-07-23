@@ -1825,37 +1825,47 @@ def main():
         st.info("💡 Sophisticated insights without AI dependencies")
     
     # Load and validate data
-    @st.cache_data
+    @st.cache_data(ttl=300)  # Cache for 5 minutes
     def load_and_validate_data():
-        """Cache the main data loading to avoid repeated CSV reads"""
+        """Load the latest stock analysis data with robust error handling"""
+        file_path = "latest_results.csv"
+        
         try:
-            import os
-            
-            # Check if file exists (log only, don't show to user)
-            if not os.path.exists("latest_results.csv"):
-                print("❌ File 'latest_results.csv' not found!")  # Console log only
+            # Check if file exists
+            if not os.path.exists(file_path):
+                print(f"❌ File not found: {file_path}")
                 return None
             
-            # Log file info to console
-            file_size = os.path.getsize("latest_results.csv")
-            print(f"📁 Loading CSV file: {file_size:,} bytes")  # Console log only
+            print(f"📂 Loading data from: {file_path}")
             
-            # Load data WITHOUT automatic date parsing (this was causing the issue)
-            df = pd.read_csv("latest_results.csv")
+            # Load CSV without automatic date parsing
+            df = pd.read_csv(file_path)
+            print(f"✅ CSV loaded successfully: {df.shape[0]} rows, {df.shape[1]} columns")
             
-            # Try to parse dates manually with error handling
-            try:
-                df['Date'] = pd.to_datetime(df['Date'])
-                print("✅ Date parsing successful")
-            except Exception as date_error:
-                print(f"⚠️ Date parsing failed: {date_error}")
-                # Keep the data anyway - dates as strings are still usable
+            # Handle date parsing separately with error catching
+            if 'Date' in df.columns:
+                try:
+                    df['Date'] = pd.to_datetime(df['Date'])
+                    print("✅ Date parsing successful")
+                except Exception as date_error:
+                    print(f"⚠️ Date parsing failed: {date_error}")
+                    print("Continuing with dates as strings...")
             
-            print(f"✅ Loaded {len(df):,} records, {df['symbol'].nunique()} symbols")  # Console log only
-            
-            if df.empty or 'symbol' not in df.columns:
-                print("❌ Data validation failed - empty or missing columns")
+            # Validate essential columns
+            required_columns = ['symbol']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                print(f"❌ Missing required columns: {missing_columns}")
                 return None
+            
+            print(f"✅ Data validation passed. Unique symbols: {df['symbol'].nunique()}")
+            return df
+            
+        except Exception as e:
+            print(f"❌ Error loading data: {e}")
+            import traceback
+            print(traceback.format_exc())
+            return None
                 
             return df
             
@@ -1914,9 +1924,16 @@ def main():
     print("=== END DEBUG ===")
     # === END DEBUG SECTION ===
     if df is None:
-        st.error("Failed to load data. Please refresh the data first.")
+        st.success(f"✅ **Data loaded successfully!** {len(df)} records from {df['symbol'].nunique()} stocks")
+        st.error("❌ **No data available**")
+        st.info("""
+        **Possible solutions:**
+        1. Run the ETL script: `python etl.py`
+        2. Check if `latest_results.csv` exists in your project folder
+        3. Verify the CSV file has the correct format
+        """)
         st.stop()
-    
+        
    # Data info section with improved metric cards
     st.markdown('<div class="section-header"><span class="section-icon">📊</span><h2>Market Overview</h2></div>', unsafe_allow_html=True)
     
