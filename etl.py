@@ -493,10 +493,43 @@ def main():
         
         print(f"Successfully fetched: {len(good_dfs)} symbols")
         print(f"Failed to fetch: {len(bad_tickers)} symbols")
-
+        
         if good_dfs:
             df = pd.concat(good_dfs, ignore_index=True)
-            df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
+            
+            # REPLACE THIS SINGLE LINE:
+            # df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
+            
+            # WITH THIS DEBUG CODE:
+            # Debug: Check what columns we actually have
+            print(f"🔍 DEBUG: Available columns: {list(df.columns)}")
+            print(f"🔍 DEBUG: Column types: {type(df.columns)}")
+        
+            # Handle different column structures
+            try:
+                # Try the normal column selection first
+                df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
+            except KeyError as e:
+                print(f"⚠️ Column selection failed: {e}")
+                print("🔧 Attempting to fix column structure...")
+                
+                # If we have MultiIndex columns, flatten them
+                if hasattr(df.columns, 'nlevels') and df.columns.nlevels > 1:
+                    print("📊 Detected MultiIndex columns - flattening...")
+                    df.columns = ['_'.join(col).strip() if isinstance(col, tuple) else col for col in df.columns]
+                    print(f"🔍 New columns after flattening: {list(df.columns)}")
+                
+                # Try to find the essential columns we need
+                essential_cols = ['symbol', 'Date']
+                available_cols = [col for col in df.columns if any(key in str(col).upper() for key in ['OPEN', 'HIGH', 'LOW', 'CLOSE', 'VOLUME'])]
+                
+                if available_cols:
+                    df = df[essential_cols + available_cols]
+                    print(f"✅ Selected available columns: {essential_cols + available_cols}")
+                else:
+                    print(f"❌ Could not find essential price columns in: {list(df.columns)}")
+                    return
+            
         else:
             print("No data fetched — check your internet connection and ticker list.")
             return
@@ -504,15 +537,15 @@ def main():
         # TIMESTAMP DATA DOWNLOAD
         download_time = datetime.now()
         df['download_time'] = download_time.strftime('%Y-%m-%d %H:%M')
-
-    # [Rest of your existing code for data processing, validation, and saving remains exactly the same]
-    
-    # DATA VALIDATION BEFORE CALC
-    bad_symbols = []
-    for sym, group in df.groupby('symbol'):
-        if group.shape[0] < min_days_needed:
-            bad_symbols.append(sym)
-    df = df[~df['symbol'].isin(bad_symbols)]
+        
+        # [Rest of your existing code continues unchanged...]
+        
+        # DATA VALIDATION BEFORE CALC
+        bad_symbols = []
+        for sym, group in df.groupby('symbol'):
+            if group.shape[0] < min_days_needed:
+                bad_symbols.append(sym)
+        df = df[~df['symbol'].isin(bad_symbols)]
 
     # ROLLING ANALYTICS
     df = df.sort_values(['symbol', 'Date']).reset_index(drop=True)
