@@ -1831,31 +1831,59 @@ def main():
         try:
             import os
             
-            # Check if file exists (log only, don't show to user)
+            # Debug info
+            print("=== DEBUG: DATA LOADING RESULT ===")
+            print("Current directory:", os.getcwd())
+            print("Files in directory:", os.listdir(os.getcwd()))
+            
+            # Check if file exists
             if not os.path.exists("latest_results.csv"):
-                print("❌ File 'latest_results.csv' not found!")  # Console log only
+                print("❌ latest_results.csv NOT FOUND")
+                print("=== END DEBUG ===")
                 return None
             
-            # Log file info to console
+            # Log file info
             file_size = os.path.getsize("latest_results.csv")
-            print(f"📁 Loading CSV file: {file_size:,} bytes")  # Console log only
+            print(f"✅ Found CSV file: {file_size:,} bytes")
             
-            # Load data WITHOUT automatic date parsing (this was causing the issue)
+            # Load data WITHOUT automatic date parsing (this prevents the error)
             df = pd.read_csv("latest_results.csv")
             
             # Try to parse dates manually with error handling
             try:
-                df['Date'] = pd.to_datetime(df['Date'])
+                df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
                 print("✅ Date parsing successful")
             except Exception as date_error:
                 print(f"⚠️ Date parsing failed: {date_error}")
-                # Keep the data anyway - dates as strings are still usable
+                # Keep the data anyway - dates as strings are still usable for display
             
-            print(f"✅ Loaded {len(df):,} records, {df['symbol'].nunique()} symbols")  # Console log only
+            # Handle download_time column if it exists
+            if 'download_time' in df.columns:
+                try:
+                    df['download_time'] = pd.to_datetime(df['download_time'], errors='coerce')
+                except:
+                    pass  # Keep as string if parsing fails
+            
+            print(f"✅ Loaded {len(df):,} records, {df['symbol'].nunique()} symbols")
+            print("=== END DEBUG ===")
             
             if df.empty or 'symbol' not in df.columns:
                 print("❌ Data validation failed - empty or missing columns")
                 return None
+                
+            return df
+            
+        except FileNotFoundError:
+            print("❌ File not found: latest_results.csv")
+            return None
+        except pd.errors.EmptyDataError:
+            print("❌ CSV file is empty")
+            return None
+        except Exception as e:
+            print(f"❌ Error loading data: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return None
                 
             return df
             
