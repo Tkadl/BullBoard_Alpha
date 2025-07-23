@@ -371,6 +371,7 @@ def main():
         for batch_num, batch in enumerate(batches, 1):
             print(f"Processing batch {batch_num}/{total_batches} ({len(batch)} symbols)...")
             
+            # Use your existing yf.download logic for now (we can add retry later)
             try:
                 raw = yf.download(batch, start=start_date, end=end_date, 
                                 group_by='ticker', auto_adjust=True, prepost=True, threads=True)
@@ -386,26 +387,10 @@ def main():
                         if temp.empty or len(temp) < min_days_needed:
                             bad_tickers.append(ticker)
                             continue
-                        
-                        # Handle MultiIndex columns that yfinance creates
-                        if isinstance(temp.columns, pd.MultiIndex):
-                            # Flatten MultiIndex columns - take the first level (the actual column names)
-                            temp.columns = [col[0] if isinstance(col, tuple) else col for col in temp.columns]
-                        
-                        # Reset index to make Date a column first
-                        temp = temp.reset_index()
-                        
-                        # Add symbol column
+                            
                         temp['symbol'] = ticker
-                        
-                        # Ensure we have the expected columns before appending
-                        expected_cols = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume']
-                        if all(col in temp.columns for col in expected_cols):
-                            good_dfs.append(temp)
-                        else:
-                            print(f"Missing expected columns for {ticker}. Available: {temp.columns.tolist()}")
-                            bad_tickers.append(ticker)
-                            continue
+                        temp['Date'] = temp.index
+                        good_dfs.append(temp.reset_index(drop=True))
                         
                     except KeyError:
                         bad_tickers.append(ticker)
