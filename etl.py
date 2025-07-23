@@ -497,39 +497,29 @@ def main():
         if good_dfs:
             df = pd.concat(good_dfs, ignore_index=True)
             
-            # REPLACE THIS SINGLE LINE:
-            # df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
-            
-            # WITH THIS DEBUG CODE:
-            # Debug: Check what columns we actually have
+            # DEBUG: Check what columns we actually have
             print(f"🔍 DEBUG: Available columns: {list(df.columns)}")
-            print(f"🔍 DEBUG: Column types: {type(df.columns)}")
-        
-            # Handle different column structures
-            try:
-                # Try the normal column selection first
-                df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
-            except KeyError as e:
-                print(f"⚠️ Column selection failed: {e}")
-                print("🔧 Attempting to fix column structure...")
-                
-                # If we have MultiIndex columns, flatten them
-                if hasattr(df.columns, 'nlevels') and df.columns.nlevels > 1:
-                    print("📊 Detected MultiIndex columns - flattening...")
-                    df.columns = ['_'.join(col).strip() if isinstance(col, tuple) else col for col in df.columns]
-                    print(f"🔍 New columns after flattening: {list(df.columns)}")
-                
-                # Try to find the essential columns we need
-                essential_cols = ['symbol', 'Date']
-                available_cols = [col for col in df.columns if any(key in str(col).upper() for key in ['OPEN', 'HIGH', 'LOW', 'CLOSE', 'VOLUME'])]
-                
-                if available_cols:
-                    df = df[essential_cols + available_cols]
-                    print(f"✅ Selected available columns: {essential_cols + available_cols}")
-                else:
-                    print(f"❌ Could not find essential price columns in: {list(df.columns)}")
-                    return
+            print(f"🔍 DEBUG: DataFrame shape: {df.shape}")
+            print(f"🔍 DEBUG: Sample data:")
+            print(df.head())
             
+            # The issue is that good_dfs already contain properly formatted data!
+            # Let's check if our individual DataFrames from good_dfs are already correct
+            print(f"🔍 DEBUG: Sample from first good_dfs DataFrame:")
+            if good_dfs:
+                print(good_dfs[0].head())
+                print(f"🔍 DEBUG: Columns in first good_dfs: {list(good_dfs[0].columns)}")
+            
+            # Check if we already have the right columns
+            expected_columns = ['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']
+            if all(col in df.columns for col in expected_columns):
+                print("✅ All expected columns found - proceeding normally")
+                df = df[expected_columns]
+            else:
+                print("❌ Column structure issue - the problem is in how we process individual tickers")
+                print("🔧 This means the issue is in the batch processing loop, not here")
+                return
+                
         else:
             print("No data fetched — check your internet connection and ticker list.")
             return
@@ -538,25 +528,22 @@ def main():
         download_time = datetime.now()
         df['download_time'] = download_time.strftime('%Y-%m-%d %H:%M')
         
-        # [Rest of your existing code continues unchanged...]
-        
         # DATA VALIDATION BEFORE CALC
         bad_symbols = []
         for sym, group in df.groupby('symbol'):
             if group.shape[0] < min_days_needed:
                 bad_symbols.append(sym)
         df = df[~df['symbol'].isin(bad_symbols)]
-
-    # ROLLING ANALYTICS
-    df = df.sort_values(['symbol', 'Date']).reset_index(drop=True)
-    df['daily_return'] = df.groupby('symbol')['Close'].pct_change(fill_method=None)
-    df['volatility_21'] = df.groupby('symbol')['daily_return'].rolling(rolling_vol_days).std().reset_index(0, drop=True)
-    df['rolling_yield_21'] = df.groupby('symbol')['daily_return'].rolling(rolling_vol_days).mean().reset_index(0, drop=True)
-    df['sharpe_21'] = (df['rolling_yield_21'] / df['volatility_21']) * np.sqrt(252)
-    df['max_drawdown_63'] = df.groupby('symbol')['Close'].rolling(rolling_drawdown_days)\
-        .apply(lambda x: (np.max(x) - np.min(x)) / np.max(x) if len(x) > 0 and np.max(x) != 0 else 0, raw=False)\
-        .reset_index(0, drop=True)
-    df['custom_risk_score'] = df['volatility_21'] * 0.7 + df['max_drawdown_63'] * 0.3
+        
+        # ROLLING ANALYTICS
+        df = df.sort_values(['symbol', 'Date']).reset_index(drop=True)
+        df['daily_return'] = df.groupby('symbol')['Close'].pct_change(fill_method=None)
+        df['volatility_21'] = df.groupby('symbol')['daily_return'].rolling(rolling_vol_days).std().reset_index(0, drop=True)
+        df['rolling_yield_21'] = df.groupby('symbol')['daily_return'].rolling(rolling_vol_days).mean().reset_index(0, drop=True)
+        df['sharpe_21'] = (df['rolling_yield_21'] / df['volatility_21']) * np.sqrt(252)
+        df['max_drawdown_63'] = df.groupby('symbol')['Close'].rolling(rolling_drawdown_days)\
+            .apply(lambda x: (np.max(x) - np.min(x)) / np.max(x) if len(x) > 0 and np.max(x) != 0 else 0, raw=False)\
+            .reset_index(0, drop=True)
 
     # Get each stock's latest analytics
     latest = df.sort_values('Date').groupby('symbol').tail(1)
