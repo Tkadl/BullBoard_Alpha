@@ -6,6 +6,36 @@ import numpy as np
 from datetime import datetime, date
 import time  # Add this import
 
+def fetch_with_retry(tickers_batch, start_date, end_date, max_retries=3, base_delay=3):
+    """
+    Fetch data with retry logic for rate limiting
+    """
+    for attempt in range(max_retries):
+        try:
+            print(f"Attempt {attempt + 1} for batch: {tickers_batch}")
+            raw = yf.download(
+                tickers_batch, 
+                start=start_date, 
+                end=end_date, 
+                group_by='ticker',
+                auto_adjust=True,
+                prepost=True,
+                threads=True
+            )
+            return raw, []  # Return data and empty failed list
+        except Exception as e:
+            print(f"Attempt {attempt + 1} failed for {tickers_batch}: {e}")
+            if attempt == max_retries - 1:
+                print(f"All attempts failed for batch: {tickers_batch}")
+                return None, tickers_batch  # Return None and failed tickers
+            
+            # Exponential backoff
+            sleep_time = base_delay * (2 ** attempt)
+            print(f"Waiting {sleep_time} seconds before retry...")
+            time.sleep(sleep_time)
+    
+    return None, tickers_batch
+
 def validate_data_quality(df, min_days_needed=65):
     """Basic data validation and anomaly detection"""
     print("=== PERFORMING DATA QUALITY CHECKS ===")
@@ -220,36 +250,49 @@ def main():
     print("\n=== ETL MAIN FUNCTION STARTED ===")
     print("ETL running from directory:", os.getcwd())
     
-    # DEBUG: OVERRIDE TICKERS FOR ISOLATED TEST
+    # === CONFIGURATION ===
     DEBUG_ONLY_A_FEW = True
+    
     if DEBUG_ONLY_A_FEW:
+        print("🔧 DEBUG MODE: Using limited tickers")
         tickers = ['AAPL', 'MSFT', 'GOOGL']
-        print("DEBUG: Only fetching these tickers:", tickers)
         batch_size = 1
         delay_between_batches = 5
+        max_retries = 3
+        print("DEBUG: Only fetching these tickers:", tickers)
+        # Skip the S&P 500 test in debug mode
+        skip_sp500_test = True
     else:
-        tickers = get_sp500_symbols()  # your original logic here
-        batch_size = 10  # or whatever your preferred batch size is
-        delay_between_batches = 2  # or your usual
-    print("=== ETL MAIN FUNCTION STARTED ===")
+        print("📈 PRODUCTION MODE")
+        tickers = get_sp500_symbols()
+        batch_size = 2
+        delay_between_batches = 10
+        max_retries = 3
+        skip_sp500_test = False
+    
+    # Other configuration
+    min_days_needed = 65
+    yield_thresh = 0.01          
+    risk_thresh = 0.06           
+    rolling_vol_days = 21
+    rolling_drawdown_days = 63
     
     try:
-        # Test S&P 500 symbol fetching first
-        print("Step 1: Fetching S&P 500 symbols...")
-        tickers = get_sp500_symbols()
-        print(f"✅ Successfully got {len(tickers)} symbols")
-        print(f"First 10 symbols: {tickers[:10]}")
+        # Conditional S&P 500 test
+        if not skip_sp500_test:
+            print("Step 1: Fetching S&P 500 symbols...")
+            tickers = get_sp500_symbols()  # Only runs in production mode
+            print(f"✅ Successfully got {len(tickers)} symbols")
+            print(f"First 10 symbols: {tickers[:10]}")
         
-        # Test single stock fetch
-        print("\nStep 2: Testing single stock fetch...")
-        import yfinance as yf
-        test_ticker = yf.Ticker("AAPL")
+        # Test single stock fetch with actual first ticker
+        print(f"\nStep 2: Testing single stock fetch...")
+        test_ticker = yf.Ticker(tickers[0])
         test_data = test_ticker.history(period="5d")
-        print(f"✅ Test fetch successful: {len(test_data)} days of AAPL data")
+        print(f"✅ Test fetch successful: {len(test_data)} days of {tickers[0]} data")
         
         # Test the date setup
         print("\nStep 3: Testing date configuration...")
-        from datetime import date
         start_date = "2024-01-01"
         end_date = date.today().strftime("%Y-%m-%d")
         print(f"✅ Date range: {start_date} to {end_date}")
@@ -265,31 +308,20 @@ def main():
         
     except Exception as e:
         print(f"❌ ERROR: {e}")
-        import traceback
         traceback.print_exc()
         return
 
     # Original code continues here...
     print("\nContinuing with original ETL logic...")
-    
-    # === USER CONFIGURATION ===
-    min_days_needed = 65
-    yield_thresh = 0.01          
-    risk_thresh = 0.06           
-    rolling_vol_days = 21
-    rolling_drawdown_days = 63
-    batch_size = 5  # Reduced from 20
-    delay_between_batches = 3  # Increased from 1
+    print(f"Using: batch_size={batch_size}, delay={delay_between_batches}s")
 
     print(f"Checking for existing data and update requirements...")
 
     # Check what data we already have
     can_do_incremental, reason = should_do_incremental_update(last_date, existing_symbols, tickers)
-
     print(f"Update decision: {reason}")
     
     # Continue with your existing if/else logic...
-
     if can_do_incremental:
         print("=== PERFORMING INCREMENTAL UPDATE ===")
         
@@ -323,71 +355,59 @@ def main():
 
     else:
         print("=== PERFORMING FULL REFRESH ===")
-        
         print(f"Fetching data for {len(tickers)} symbols...")
         
         good_dfs = []
         bad_tickers = []
 
-        # Download data in batches with progress tracking
-        total_batches = (len(tickers) + batch_size - 1) // batch_size
+        # Create batches (this was missing!)
+        batches = [tickers[i:i + batch_size] for i in range(0, len(tickers), batch_size)]
+        total_batches = len(batches)
         start_time = datetime.now()
         
-            
-        for batch_num, i in enumerate(range(0, len(tickers), batch_size), 1):
-            batch = tickers[i:i+batch_size]
-            batch_info = f"Fetching {len(batch)} symbols: {batch[0]} to {batch[-1]}"
-      
-            
+        for batch_num, batch in enumerate(batches, 1):
             print(f"Processing batch {batch_num}/{total_batches} ({len(batch)} symbols)...")
             
+            # Use your existing yf.download logic for now (we can add retry later)
             try:
-                raw = yf.download(
-                    tickers=" ".join(batch),
-                    start=start_date,
-                    end=end_date,
-                    group_by='ticker',
-                    auto_adjust=True,
-                    progress=False,
-                    threads=True
-                )
+                raw = yf.download(batch, start=start_date, end=end_date, 
+                                group_by='ticker', auto_adjust=True, prepost=True, threads=True)
                 
-                if len(batch) == 1:
-                    ticker = batch[0]
-                    temp = raw.copy()
-                    if temp.empty or len(temp) < min_days_needed:
-                        bad_tickers.append(ticker)
-                        continue
-                    temp['symbol'] = ticker
-                    temp['Date'] = temp.index
-                    good_dfs.append(temp.reset_index(drop=True))
-                else:
-                    for ticker in batch:
-                        try:
+                # Process each ticker in the batch
+                for ticker in batch:
+                    try:
+                        if len(batch) == 1:
+                            temp = raw.copy()
+                        else:
                             temp = raw[ticker].copy()
-                            if temp.empty or len(temp) < min_days_needed:
-                                bad_tickers.append(ticker)
-                                continue
-                            temp['symbol'] = ticker
-                            temp['Date'] = temp.index
-                            good_dfs.append(temp.reset_index(drop=True))
-                        except KeyError:
+                            
+                        if temp.empty or len(temp) < min_days_needed:
                             bad_tickers.append(ticker)
                             continue
                             
+                        temp['symbol'] = ticker
+                        temp['Date'] = temp.index
+                        good_dfs.append(temp.reset_index(drop=True))
+                        
+                    except KeyError:
+                        bad_tickers.append(ticker)
+                        continue
+                    except Exception as e:
+                        print(f"Error processing {ticker}: {e}")
+                        bad_tickers.append(ticker)
+                        continue
+                        
             except Exception as e:
                 print(f"Error in batch {batch_num}: {e}")
                 bad_tickers.extend(batch)
                 continue
             
-            # Add delay between batches to be respectful to the API
+            # Add delay between batches
             if batch_num < total_batches:
                 time.sleep(delay_between_batches)
         
         print(f"Successfully fetched: {len(good_dfs)} symbols")
         print(f"Failed to fetch: {len(bad_tickers)} symbols")
-        if bad_tickers:
-            print(f"Failed symbols: {bad_tickers[:10]}{'...' if len(bad_tickers) > 10 else ''}")
 
         if good_dfs:
             df = pd.concat(good_dfs, ignore_index=True)
@@ -395,10 +415,13 @@ def main():
         else:
             print("No data fetched — check your internet connection and ticker list.")
             return
+            
         # TIMESTAMP DATA DOWNLOAD
         download_time = datetime.now()
         df['download_time'] = download_time.strftime('%Y-%m-%d %H:%M')
 
+    # [Rest of your existing code for data processing, validation, and saving remains exactly the same]
+    
     # DATA VALIDATION BEFORE CALC
     bad_symbols = []
     for sym, group in df.groupby('symbol'):
