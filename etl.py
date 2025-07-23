@@ -464,10 +464,16 @@ def main():
                         print(f"🔍 Processing ticker: {ticker}")
                         
                         # Handle single vs multi-ticker batch downloads
-                        if len(batch) == 1:
-                            # Single ticker - raw data has simple columns
+                       if len(batch) == 1:
+                            # Single ticker - but still may have MultiIndex columns
                             temp = raw.copy()
-                            print(f"🔍 Single ticker batch - columns: {list(temp.columns)}")
+                            print(f"🔍 Single ticker batch - original columns: {list(temp.columns)}")
+                            
+                            # Flatten MultiIndex columns if they exist
+                            if hasattr(temp.columns, 'nlevels') and temp.columns.nlevels > 1:
+                                # Extract just the price column names (second level of MultiIndex)
+                                temp.columns = [col[1] if isinstance(col, tuple) else col for col in temp.columns]
+                                print(f"🔍 Flattened columns: {list(temp.columns)}")
                         else:
                             # Multi-ticker batch - raw data has MultiIndex columns
                             if hasattr(raw.columns, 'nlevels') and raw.columns.nlevels > 1:
