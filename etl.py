@@ -1,3 +1,5 @@
+import os
+import traceback
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -215,6 +217,20 @@ def get_sp500_symbols():
     return sp500_symbols
 
 def main():
+    print("\n=== ETL MAIN FUNCTION STARTED ===")
+    print("ETL running from directory:", os.getcwd())
+    
+    # DEBUG: OVERRIDE TICKERS FOR ISOLATED TEST
+    DEBUG_ONLY_A_FEW = True
+    if DEBUG_ONLY_A_FEW:
+        tickers = ['AAPL', 'MSFT', 'GOOGL']
+        print("DEBUG: Only fetching these tickers:", tickers)
+        batch_size = 1
+        delay_between_batches = 5
+    else:
+        tickers = get_sp500_symbols()  # your original logic here
+        batch_size = 10  # or whatever your preferred batch size is
+        delay_between_batches = 2  # or your usual
     print("=== ETL MAIN FUNCTION STARTED ===")
     
     try:
@@ -411,8 +427,28 @@ def main():
     df = validate_data_quality(df)
     
     # Save summary table for Streamlit app
-    df.to_csv("latest_results.csv", index=False)
-    print(f"Data saved to latest_results.csv with {len(df)} total records for {df['symbol'].nunique()} unique symbols")
+    print("\n=== ETL SUMMARY BEFORE FINAL SAVE ===")
+    try:
+        print(f"DataFrame shape: {df.shape}")
+        print(f"Unique symbols: {df['symbol'].nunique() if 'symbol' in df.columns else 'MISSING SYMBOL COL'}")
+        print("Sample rows:")
+        print(df.head())
+    except Exception as e:
+        print("❗ Trouble with dataframe before save:", str(e))
+        print(traceback.format_exc())
+    
+    # Write file and confirm output
+    output_path = "latest_results.csv"
+    print("Attempting to save data to:", output_path)
+    try:
+        df.to_csv(output_path, index=False)
+        print("✅ Data saved. File size:", os.path.getsize(output_path), "bytes")
+    except Exception as e:
+        print(f"❌ Failed to save output CSV: {e}")
+        print(traceback.format_exc())
+    
+    # Show files in directory so you know file is truly there
+    print("Files in cwd:", os.listdir(os.getcwd()))
 
 if __name__ == "__main__":
     main()
