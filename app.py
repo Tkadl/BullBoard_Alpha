@@ -5,7 +5,6 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 import datetime
-import os
 TRANSFORMERS_AVAILABLE = False
 pipeline = None
 
@@ -1871,29 +1870,6 @@ def main():
             import traceback
             traceback.print_exc()
             return None
-            
-            print(f"✅ Data validation passed. Unique symbols: {df['symbol'].nunique()}")
-            return df
-            
-        except Exception as e:
-            print(f"❌ Error loading data: {e}")
-            import traceback
-            print(traceback.format_exc())
-            return None
-                
-            return df
-            
-        except FileNotFoundError:
-            print("❌ File not found: latest_results.csv")
-            return None
-        except pd.errors.EmptyDataError:
-            print("❌ CSV file is empty")
-            return None
-        except Exception as e:
-            print(f"❌ Error loading data: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            return None
     
     # Load and validate data with caching
     df = load_and_validate_data()
@@ -1922,14 +1898,7 @@ def main():
                 
                 # Try loading manually to see what fails
                 try:
-                    df = pd.read_csv("latest_results.csv")  # Load without auto-parsing
-                    # Handle date parsing separately with error catching:
-                    try:
-                        df['Date'] = pd.to_datetime(df['Date'])
-                        print("✅ Date parsing successful")
-                    except Exception as date_error:
-                        print(f"⚠️ Date parsing failed: {date_error}")
-                        # Keep data anyway - dates as strings still work
+                    df_test = pd.read_csv('latest_results.csv', parse_dates=["Date"])
                     print(f"Manual load successful: {df_test.shape}")
                     print(f"Manual load columns: {list(df_test.columns)}")
                 except Exception as manual_error:
@@ -1945,21 +1914,9 @@ def main():
     print("=== END DEBUG ===")
     # === END DEBUG SECTION ===
     if df is None:
-        st.error("❌ **No data available**")
-        st.info("""
-        **Possible solutions:**
-        1. Run the ETL script: `python etl.py`
-        2. Check if `latest_results.csv` exists in your project folder
-        3. Verify the CSV file has the correct format
-        """)
+        st.error("Failed to load data. Please refresh the data first.")
         st.stop()
     
-    # Add data info display with error checking
-    if df is not None and not df.empty:
-        st.success(f"✅ **Data loaded successfully!** {len(df)} records from {df['symbol'].nunique()} stocks")
-    else:
-        st.warning("⚠️ Data loaded but appears to be empty")
-        
    # Data info section with improved metric cards
     st.markdown('<div class="section-header"><span class="section-icon">📊</span><h2>Market Overview</h2></div>', unsafe_allow_html=True)
     
