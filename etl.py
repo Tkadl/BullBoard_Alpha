@@ -57,7 +57,6 @@ def fetch_with_retry(tickers_batch, start_date, end_date, max_retries=3, base_de
                 tickers_batch, 
                 start=start_date, 
                 end=end_date, 
-                group_by='ticker',
                 auto_adjust=True,
                 prepost=True,
                 threads=True
@@ -193,7 +192,7 @@ def should_do_incremental_update(last_date, existing_symbols, current_tickers):
     
     return True, f"Will fetch {days_since_update} day(s) of new data"
 
-def fetch_incremental_data(tickers, last_date, end_date, min_days_needed, batch_size=30, delay_between_batches=2):
+def fetch_incremental_data(tickers, last_date, end_date, min_days_needed, batch_size=1, delay_between_batches=2):
     """Fetch only new data since last_date"""
     from datetime import datetime, timedelta
     
@@ -215,10 +214,9 @@ def fetch_incremental_data(tickers, last_date, end_date, min_days_needed, batch_
         
         try:
             raw = yf.download(
-                tickers=" ".join(batch),
+                batch,  # Use list instead of string
                 start=incremental_start,
                 end=end_date,
-                group_by='ticker',
                 auto_adjust=True,
                 progress=False,
                 threads=True
@@ -305,7 +303,7 @@ def main():
     else:
         print("📈 PRODUCTION MODE")
         tickers = get_sp500_symbols()
-        batch_size = 2
+        batch_size = 1
         delay_between_batches = 10
         max_retries = 3
         skip_sp500_test = False
@@ -453,15 +451,13 @@ def main():
             # Use your existing yf.download logic for now (we can add retry later)
             try:
                 raw = yf.download(batch, start=start_date, end=end_date, 
-                                group_by='ticker', auto_adjust=True, prepost=True, threads=True)
+                                auto_adjust=True, prepost=True, threads=True)
                 
                 # Process each ticker in the batch
                 for ticker in batch:
                     try:
-                        if len(batch) == 1:
-                            temp = raw.copy()
-                        else:
-                            temp = raw[ticker].copy()
+                        # With batch_size=1, we always have single symbol
+                        temp = raw.copy()
                             
                         if temp.empty or len(temp) < min_days_needed:
                             bad_tickers.append(ticker)
@@ -479,10 +475,10 @@ def main():
                         bad_tickers.append(ticker)
                         continue
                         
-            except Exception as e:
-                print(f"Error in batch {batch_num}: {e}")
-                bad_tickers.extend(batch)
-                continue
+                except Exception as e:
+                    print(f"Error in batch {batch_num}: {e}")
+                    bad_tickers.extend(batch)
+                    continue
             
             # Add delay between batches
             if batch_num < total_batches:
