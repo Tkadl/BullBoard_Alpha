@@ -431,7 +431,7 @@ def main():
         print(f"Successfully fetched: {len(good_dfs)} symbols")
         print(f"Failed to fetch: {len(bad_tickers)} symbols")
 
-        if good_dfs:
+       if good_dfs:
             print("🔧 Standardizing DataFrame columns before concatenation...")
             standardized_dfs = []
             expected_columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'symbol', 'Date']
@@ -445,6 +445,7 @@ def main():
             print(f"✅ Concatenation complete: {df.shape}")
             print(f"✅ Final columns: {list(df.columns)}")
             print(f"✅ Column type: {type(df.columns)}")
+        else:
             print("No data fetched — check your internet connection and ticker list.")
             return
             
