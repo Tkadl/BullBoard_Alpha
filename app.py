@@ -1482,84 +1482,19 @@ def create_user_friendly_stock_selection(unique_symbols):
     symbol_to_name = get_complete_symbol_name_mapping()
     
     st.markdown("---")
-    # CSS for targeted column backgrounds + subtle page background
+    # Beautiful page background
     st.markdown("""
     <style>
-    /* Subtle page background */
     .stApp {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
-    }
-    
-    /* Target only the specific section where our columns are */
-    .portfolio-section {
-        background: transparent;
-        padding: 20px 0;
-    }
-    
-    /* Left column gradient - contained */
-    .portfolio-section div[data-testid="column"]:nth-of-type(1) {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        border-radius: 15px !important;
-        padding: 25px !important;
-        margin-right: 10px !important;
-        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        min-height: 500px !important;
     }
     
-    /* Right column gradient - contained */
-    .portfolio-section div[data-testid="column"]:nth-of-type(2) {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
-        border-radius: 15px !important;
-        padding: 25px !important;
-        margin-left: 10px !important;
-        box-shadow: 0 8px 32px rgba(240, 147, 251, 0.3) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        min-height: 500px !important;
-    }
-    
-    /* Style text in gradient columns to be white */
-    .portfolio-section div[data-testid="column"]:nth-of-type(1) h3,
-    .portfolio-section div[data-testid="column"]:nth-of-type(1) p,
-    .portfolio-section div[data-testid="column"]:nth-of-type(1) .stMarkdown {
+    .stMarkdown, .stText {
         color: white !important;
-        font-weight: bold !important;
-    }
-    
-    .portfolio-section div[data-testid="column"]:nth-of-type(2) h3,
-    .portfolio-section div[data-testid="column"]:nth-of-type(2) p,
-    .portfolio-section div[data-testid="column"]:nth-of-type(2) .stMarkdown {
-        color: white !important;
-        font-weight: bold !important;
-    }
-    
-    /* Style buttons in gradient columns */
-    .portfolio-section .stButton > button {
-        background: rgba(255, 255, 255, 0.9) !important;
-        color: #2d3436 !important;
-        border: none !important;
-        border-radius: 8px !important;
-        font-weight: bold !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-    }
-    
-    /* Style selectboxes in gradient columns */
-    .portfolio-section .stSelectbox > div > div {
-        background: rgba(255, 255, 255, 0.9) !important;
-        border-radius: 8px !important;
-        border: none !important;
-    }
-    
-    /* Style text inputs in gradient columns */
-    .portfolio-section .stTextInput > div > div > input {
-        background: rgba(255, 255, 255, 0.9) !important;
-        border-radius: 8px !important;
-        border: none !important;
-        color: #2d3436 !important;
     }
     </style>
     """, unsafe_allow_html=True)
-    
+        
     # Create a container specifically for the portfolio section
     st.markdown('<div class="portfolio-section">', unsafe_allow_html=True)
     
