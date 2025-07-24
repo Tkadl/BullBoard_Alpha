@@ -1824,13 +1824,13 @@ def create_user_friendly_stock_selection(unique_symbols):
                             st.success(f"Added {symbol}!")
                             st.rerun()
     
-        # Return selection
-        if st.session_state.stock_basket:
-            return st.session_state.stock_basket
-        else:
-            default_stocks = ['AAPL', 'MSFT', 'GOOGL']
-            available_defaults = [stock for stock in default_stocks if stock in unique_symbols]
-            return available_defaults[:3] if available_defaults else
+# Return selection
+if st.session_state.stock_basket:
+    return st.session_state.stock_basket
+else:
+    default_stocks = ['AAPL', 'MSFT', 'GOOGL']
+    available_defaults = [stock for stock in default_stocks if stock in unique_symbols]
+    return available_defaults[:3] if available_defaults else
 
 def main():
     create_header()
