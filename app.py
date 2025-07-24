@@ -1484,11 +1484,12 @@ def create_user_friendly_stock_selection(unique_symbols):
     st.markdown("""
     <style>
     .stApp {
-        background: linear-gradient(135deg, #232526 0%, #414345 100%) !important;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
     }
     
-    .stMarkdown, .stText {
-        color: #f8f9fa !important;
+    /* Text stays dark on light background */
+    .stMarkdown, .stText, h1, h2, h3 {
+        color: #2d3436 !important;
     }
     </style>
     """, unsafe_allow_html=True)
