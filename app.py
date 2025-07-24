@@ -1825,7 +1825,6 @@ def main():
         st.info("💡 Sophisticated insights without AI dependencies")
    
     # Load and validate data
-    @st.cache_data
     def load_and_validate_data():
         """Cache the main data loading to avoid repeated CSV reads"""
         try:
