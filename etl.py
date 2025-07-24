@@ -270,7 +270,7 @@ def main():
     print("ETL running from directory:", os.getcwd())
     
     # === CONFIGURATION ===
-    DEBUG_ONLY_A_FEW = True
+    DEBUG_ONLY_A_FEW = False
     
     if DEBUG_ONLY_A_FEW:
         print("🔧 DEBUG MODE: Using limited tickers")
