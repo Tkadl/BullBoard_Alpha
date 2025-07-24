@@ -475,7 +475,7 @@ def main():
                         bad_tickers.append(ticker)
                         continue
                         
-                except Exception as e:
+            except Exception as e:
                     print(f"Error in batch {batch_num}: {e}")
                     bad_tickers.extend(batch)
                     continue
