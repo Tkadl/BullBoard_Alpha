@@ -268,15 +268,6 @@ def get_sp500_symbols():
 def main():
     print("\n=== ETL MAIN FUNCTION STARTED ===")
     print("ETL running from directory:", os.getcwd())
-
-     # 🔥 FORCE CLEAN START - REMOVE THIS AFTER FIXING
-    print("🔥 FORCING CLEAN START - Removing corrupted CSV")
-    try:
-        if os.path.exists("latest_results.csv"):
-            os.remove("latest_results.csv")
-            print("✅ Removed corrupted CSV file")
-    except Exception as e:
-        print(f"⚠️ Could not remove CSV: {e}")
     
     # === CONFIGURATION ===
     DEBUG_ONLY_A_FEW = True
