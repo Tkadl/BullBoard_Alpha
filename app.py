@@ -1481,12 +1481,13 @@ def create_user_friendly_stock_selection(unique_symbols):
     
     symbol_to_name = get_complete_symbol_name_mapping()
     
-    st.markdown("---")
-    # Beautiful page background
     st.markdown("""
     <style>
     .stApp {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background-image: 
+            radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 0%, transparent 50%),
+            radial-gradient(circle at 75% 75%, rgba(255,255,255,0.1) 0%, transparent 50%);
     }
     
     .stMarkdown, .stText {
