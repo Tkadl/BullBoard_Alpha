@@ -354,6 +354,45 @@ def main():
         traceback.print_exc()
         return
 
+    # 🔥 INSERT DEBUG CODE HERE (after line 334, before line 335)
+    def debug_yfinance_structure():
+        """Debug function to understand yfinance column structure"""
+        print("\n=== DEBUGGING YFINANCE STRUCTURE ===")
+        
+        # Test single symbol
+        print("1. Testing single symbol fetch:")
+        try:
+            single_data = yf.download('AAPL', start='2024-01-01', end='2024-01-10', progress=False)
+            print(f"   Columns: {single_data.columns}")
+            print(f"   Column type: {type(single_data.columns)}")
+            print(f"   Shape: {single_data.shape}")
+            if hasattr(single_data.columns, 'nlevels'):
+                print(f"   MultiIndex levels: {single_data.columns.nlevels}")
+            print(f"   Sample data:\n{single_data.head(2)}")
+        except Exception as e:
+            print(f"   Error in single fetch: {e}")
+        
+        # Test multiple symbols
+        print("\n2. Testing multiple symbol fetch:")
+        try:
+            multi_data = yf.download(['AAPL', 'MSFT'], start='2024-01-01', end='2024-01-10', progress=False)
+            print(f"   Columns: {multi_data.columns}")
+            print(f"   Column type: {type(multi_data.columns)}")
+            print(f"   Shape: {multi_data.shape}")
+            if hasattr(multi_data.columns, 'nlevels'):
+                print(f"   MultiIndex levels: {multi_data.columns.nlevels}")
+                if multi_data.columns.nlevels > 1:
+                    print(f"   Level 0: {multi_data.columns.levels[0]}")
+                    print(f"   Level 1: {multi_data.columns.levels[1]}")
+            print(f"   Sample data:\n{multi_data.head(2)}")
+        except Exception as e:
+            print(f"   Error in multi fetch: {e}")
+        
+        print("=== END DEBUG ===\n")
+    
+    # RUN THE DEBUG
+    debug_yfinance_structure()
+
     # Original code continues here...
     print("\nContinuing with original ETL logic...")
     print(f"Using: batch_size={batch_size}, delay={delay_between_batches}s")
