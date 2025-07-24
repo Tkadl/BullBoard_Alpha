@@ -359,12 +359,21 @@ def main():
             # Combine new data with standardized columns
             print("🔧 Standardizing incremental data columns...")
             standardized_dfs = []
-            expected_columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'symbol', 'Date']
             
-            for df_temp in good_dfs:
+            for i, df_temp in enumerate(good_dfs):
+                print(f"  DEBUG: Incremental DataFrame {i} columns before standardization: {list(df_temp.columns)}")
+                
+                # Flatten MultiIndex columns if they exist
+                if isinstance(df_temp.columns, pd.MultiIndex):
+                    print(f"  🔧 Flattening MultiIndex columns for incremental DataFrame {i}")
+                    df_temp.columns = df_temp.columns.get_level_values(0)
+                
+                # Now standardize column order
+                expected_columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'symbol', 'Date']
                 df_temp = df_temp[expected_columns]
                 standardized_dfs.append(df_temp)
-                    
+                print(f"  ✅ Incremental DataFrame {i} standardized: {list(df_temp.columns)}")
+                
             new_df = pd.concat(standardized_dfs, ignore_index=True)
             print(f"✅ Incremental concatenation complete: {new_df.shape}")
             
