@@ -431,7 +431,7 @@ def main():
         print(f"Successfully fetched: {len(good_dfs)} symbols")
         print(f"Failed to fetch: {len(bad_tickers)} symbols")
 
-       if good_dfs:
+        if good_dfs:
             print("🔧 Standardizing DataFrame columns before concatenation...")
             standardized_dfs = []
             expected_columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'symbol', 'Date']
