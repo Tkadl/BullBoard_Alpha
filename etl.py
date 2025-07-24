@@ -212,43 +212,24 @@ def fetch_incremental_data(tickers, last_date, end_date, min_days_needed, batch_
         batch = tickers[i:i+batch_size]
         print(f"Processing incremental batch {batch_num}/{total_batches} ({len(batch)} symbols)...")
         
-        try:
-            raw = yf.download(
-                batch,  # Use list instead of string
-                start=incremental_start,
-                end=end_date,
-                auto_adjust=True,
-                progress=False,
-                threads=True
-            )
-            
-            if len(batch) == 1:
-                ticker = batch[0]
-                temp = raw.copy()
-                if temp.empty:
+        # Use same single-ticker approach for incremental updates
+        for ticker in batch:
+            try:
+                data = yf.download(ticker, start=incremental_start, end=end_date,
+                                  auto_adjust=True, progress=False, threads=True)
+                
+                if data.empty:
                     bad_tickers.append(ticker)
                     continue
-                temp['symbol'] = ticker
-                temp['Date'] = temp.index
-                good_dfs.append(temp.reset_index(drop=True))
-            else:
-                for ticker in batch:
-                    try:
-                        temp = raw[ticker].copy()
-                        if temp.empty:
-                            bad_tickers.append(ticker)
-                            continue
-                        temp['symbol'] = ticker
-                        temp['Date'] = temp.index
-                        good_dfs.append(temp.reset_index(drop=True))
-                    except KeyError:
-                        bad_tickers.append(ticker)
-                        continue
-                        
-        except Exception as e:
-            print(f"Error in batch {batch_num}: {e}")
-            bad_tickers.extend(batch)
-            continue
+                    
+                data['symbol'] = ticker
+                data['Date'] = data.index
+                good_dfs.append(data.reset_index(drop=True))
+                
+            except Exception as e:
+                print(f"Error in incremental fetch for {ticker}: {e}")
+                bad_tickers.append(ticker)
+                continue
             
         if delay_between_batches > 0:
             time.sleep(delay_between_batches)
@@ -352,44 +333,6 @@ def main():
         traceback.print_exc()
         return
 
-    # 🔥 INSERT DEBUG CODE HERE (after line 334, before line 335)
-    def debug_yfinance_structure():
-        """Debug function to understand yfinance column structure"""
-        print("\n=== DEBUGGING YFINANCE STRUCTURE ===")
-        
-        # Test single symbol
-        print("1. Testing single symbol fetch:")
-        try:
-            single_data = yf.download('AAPL', start='2024-01-01', end='2024-01-10', progress=False)
-            print(f"   Columns: {single_data.columns}")
-            print(f"   Column type: {type(single_data.columns)}")
-            print(f"   Shape: {single_data.shape}")
-            if hasattr(single_data.columns, 'nlevels'):
-                print(f"   MultiIndex levels: {single_data.columns.nlevels}")
-            print(f"   Sample data:\n{single_data.head(2)}")
-        except Exception as e:
-            print(f"   Error in single fetch: {e}")
-        
-        # Test multiple symbols
-        print("\n2. Testing multiple symbol fetch:")
-        try:
-            multi_data = yf.download(['AAPL', 'MSFT'], start='2024-01-01', end='2024-01-10', progress=False)
-            print(f"   Columns: {multi_data.columns}")
-            print(f"   Column type: {type(multi_data.columns)}")
-            print(f"   Shape: {multi_data.shape}")
-            if hasattr(multi_data.columns, 'nlevels'):
-                print(f"   MultiIndex levels: {multi_data.columns.nlevels}")
-                if multi_data.columns.nlevels > 1:
-                    print(f"   Level 0: {multi_data.columns.levels[0]}")
-                    print(f"   Level 1: {multi_data.columns.levels[1]}")
-            print(f"   Sample data:\n{multi_data.head(2)}")
-        except Exception as e:
-            print(f"   Error in multi fetch: {e}")
-        
-        print("=== END DEBUG ===\n")
-    
-    # RUN THE DEBUG
-    debug_yfinance_structure()
 
     # Original code continues here...
     print("\nContinuing with original ETL logic...")
@@ -448,36 +391,29 @@ def main():
         for batch_num, batch in enumerate(batches, 1):
             print(f"Processing batch {batch_num}/{total_batches} ({len(batch)} symbols)...")
             
-            # Use your existing yf.download logic for now (we can add retry later)
-            try:
-                raw = yf.download(batch, start=start_date, end=end_date, 
-                                auto_adjust=True, prepost=True, threads=True)
-                
-                # Process each ticker in the batch
-                for ticker in batch:
-                    try:
-                        # With batch_size=1, we always have single symbol
-                        temp = raw.copy()
-                            
-                        if temp.empty or len(temp) < min_days_needed:
-                            bad_tickers.append(ticker)
-                            continue
-                            
-                        temp['symbol'] = ticker
-                        temp['Date'] = temp.index
-                        good_dfs.append(temp.reset_index(drop=True))
-                        
-                    except KeyError:
-                        bad_tickers.append(ticker)
-                        continue
-                    except Exception as e:
-                        print(f"Error processing {ticker}: {e}")
+    
+            # Process each ticker individually (Stack Overflow single ticker approach)
+            for ticker in batch:
+                try:
+                    print(f"  Downloading {ticker}...")
+                    # Download single ticker without group_by - creates simple columns
+                    data = yf.download(ticker, start=start_date, end=end_date, 
+                                      auto_adjust=True, prepost=True, threads=True)
+                    
+                    if data.empty or len(data) < min_days_needed:
+                        print(f"  ⚠️ Insufficient data for {ticker}: {len(data)} rows")
                         bad_tickers.append(ticker)
                         continue
                         
-            except Exception as e:
-                    print(f"Error in batch {batch_num}: {e}")
-                    bad_tickers.extend(batch)
+                    # Add ticker column (Stack Overflow approach)
+                    data['symbol'] = ticker
+                    data['Date'] = data.index
+                    good_dfs.append(data.reset_index(drop=True))
+                    print(f"  ✅ {ticker}: {len(data)} rows added")
+                    
+                except Exception as e:
+                    print(f"  ❌ Error downloading {ticker}: {e}")
+                    bad_tickers.append(ticker)
                     continue
             
             # Add delay between batches
