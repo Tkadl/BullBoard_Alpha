@@ -356,9 +356,17 @@ def main():
         print(f"Incremental fetch: {len(good_dfs)} symbols updated, {len(bad_tickers)} failed")
         
         if good_dfs:
-            # Combine new data
-            new_df = pd.concat(good_dfs, ignore_index=True)
-            new_df = new_df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
+            # Combine new data with standardized columns
+            print("🔧 Standardizing incremental data columns...")
+            standardized_dfs = []
+            expected_columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'symbol', 'Date']
+            
+            for df_temp in good_dfs:
+                df_temp = df_temp[expected_columns]
+                standardized_dfs.append(df_temp)
+                    
+            new_df = pd.concat(standardized_dfs, ignore_index=True)
+            print(f"✅ Incremental concatenation complete: {new_df.shape}")
             
             # Add timestamp for new data
             download_time = datetime.now()
@@ -424,27 +432,25 @@ def main():
         print(f"Failed to fetch: {len(bad_tickers)} symbols")
 
         if good_dfs:
-            df = pd.concat(good_dfs, ignore_index=True)
-            print(f"🔍 DEBUG: About to select columns...")
-            print(f"DataFrame shape: {df.shape}")
-            print(f"DataFrame columns: {df.columns}")
-            print(f"DataFrame columns list: {list(df.columns)}")
-            print(f"Column type: {type(df.columns)}")
-            if hasattr(df.columns, 'nlevels'):
-                print(f"MultiIndex levels: {df.columns.nlevels}")
-                if df.columns.nlevels > 1:
-                    print(f"Level 0: {list(df.columns.levels[0])}")  
-                    print(f"Level 1: {list(df.columns.levels[1])}")
-            df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
-        else:
+            print("🔧 Standardizing DataFrame columns before concatenation...")
+            standardized_dfs = []
+            expected_columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'symbol', 'Date']
+        
+            for i, df_temp in enumerate(good_dfs):
+                # Ensure columns are in consistent order
+                df_temp = df_temp[expected_columns]
+                standardized_dfs.append(df_temp)
+                
+            df = pd.concat(standardized_dfs, ignore_index=True)
+            print(f"✅ Concatenation complete: {df.shape}")
+            print(f"✅ Final columns: {list(df.columns)}")
+            print(f"✅ Column type: {type(df.columns)}")
             print("No data fetched — check your internet connection and ticker list.")
             return
             
         # TIMESTAMP DATA DOWNLOAD
         download_time = datetime.now()
         df['download_time'] = download_time.strftime('%Y-%m-%d %H:%M')
-
-    # [Rest of your existing code for data processing, validation, and saving remains exactly the same]
     
     # DATA VALIDATION BEFORE CALC
     bad_symbols = []
