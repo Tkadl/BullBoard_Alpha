@@ -1826,38 +1826,51 @@ def main():
         st.info("💡 Sophisticated insights without AI dependencies")
     
     # Load and validate data
-    @st.cache_data(ttl=300)  # Cache for 5 minutes
+    @st.cache_data
     def load_and_validate_data():
-        """Load the latest stock analysis data with robust error handling"""
-        file_path = "latest_results.csv"
-        
+        """Cache the main data loading to avoid repeated CSV reads"""
         try:
-            # Check if file exists
-            if not os.path.exists(file_path):
-                print(f"❌ File not found: {file_path}")
+            import os
+            
+            # Check if file exists (log only, don't show to user)
+            if not os.path.exists("latest_results.csv"):
+                print("❌ File 'latest_results.csv' not found!")  # Console log only
                 return None
             
-            print(f"📂 Loading data from: {file_path}")
+            # Log file info to console
+            file_size = os.path.getsize("latest_results.csv")
+            print(f"📁 Loading CSV file: {file_size:,} bytes")  # Console log only
             
-            # Load CSV without automatic date parsing
-            df = pd.read_csv(file_path)
-            print(f"✅ CSV loaded successfully: {df.shape[0]} rows, {df.shape[1]} columns")
+            # Load data WITHOUT automatic date parsing (this was causing the issue)
+            df = pd.read_csv("latest_results.csv")
             
-            # Handle date parsing separately with error catching
-            if 'Date' in df.columns:
-                try:
-                    df['Date'] = pd.to_datetime(df['Date'])
-                    print("✅ Date parsing successful")
-                except Exception as date_error:
-                    print(f"⚠️ Date parsing failed: {date_error}")
-                    print("Continuing with dates as strings...")
+            # Try to parse dates manually with error handling
+            try:
+                df['Date'] = pd.to_datetime(df['Date'])
+                print("✅ Date parsing successful")
+            except Exception as date_error:
+                print(f"⚠️ Date parsing failed: {date_error}")
+                # Keep the data anyway - dates as strings are still usable
             
-            # Validate essential columns
-            required_columns = ['symbol']
-            missing_columns = [col for col in required_columns if col not in df.columns]
-            if missing_columns:
-                print(f"❌ Missing required columns: {missing_columns}")
+            print(f"✅ Loaded {len(df):,} records, {df['symbol'].nunique()} symbols")  # Console log only
+            
+            if df.empty or 'symbol' not in df.columns:
+                print("❌ Data validation failed - empty or missing columns")
                 return None
+                
+            return df
+            
+        except FileNotFoundError:
+            print("❌ File not found: latest_results.csv")
+            return None
+        except pd.errors.EmptyDataError:
+            print("❌ CSV file is empty")
+            return None
+        except Exception as e:
+            print(f"❌ Error loading data: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return None
             
             print(f"✅ Data validation passed. Unique symbols: {df['symbol'].nunique()}")
             return df
