@@ -1909,7 +1909,14 @@ def main():
                 
                 # Try loading manually to see what fails
                 try:
-                    df_test = pd.read_csv('latest_results.csv', parse_dates=["Date"])
+                    df = pd.read_csv("latest_results.csv")  # Load without auto-parsing
+                    # Handle date parsing separately with error catching:
+                    try:
+                        df['Date'] = pd.to_datetime(df['Date'])
+                        print("✅ Date parsing successful")
+                    except Exception as date_error:
+                        print(f"⚠️ Date parsing failed: {date_error}")
+                        # Keep data anyway - dates as strings still work
                     print(f"Manual load successful: {df_test.shape}")
                     print(f"Manual load columns: {list(df_test.columns)}")
                 except Exception as manual_error:
