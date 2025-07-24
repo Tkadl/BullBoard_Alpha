@@ -259,8 +259,9 @@ def main():
         batch_size = 1
         delay_between_batches = 5
         max_retries = 3
-        skip_sp500_test = True  # KEY: Flag to skip S&P 500 fetching
         print("DEBUG: Only fetching these tickers:", tickers)
+        # Skip the S&P 500 test in debug mode
+        skip_sp500_test = True
     else:
         print("📈 PRODUCTION MODE")
         tickers = get_sp500_symbols()
@@ -277,7 +278,7 @@ def main():
     rolling_drawdown_days = 63
     
     try:
-        # CONDITIONAL S&P 500 test - ONLY run in production mode
+        # Conditional S&P 500 test - ONLY run in production mode
         if not skip_sp500_test:
             print("Step 1: Fetching S&P 500 symbols...")
             tickers = get_sp500_symbols()  # Only runs in production mode
@@ -286,11 +287,6 @@ def main():
         else:
             print("Step 1: Skipping S&P 500 fetch (debug mode)")
             print(f"✅ Using debug tickers: {tickers}")
-        
-        # ADD MISSING VARIABLES - Add this after the conditional S&P 500 test:
-        batches = [tickers[i:i + batch_size] for i in range(0, len(tickers), batch_size)]
-        total_batches = len(batches)
-        print(f"Will process {len(tickers)} tickers in {total_batches} batches")
         
         # Test single stock fetch with actual first ticker
         print(f"\nStep 2: Testing single stock fetch...")
@@ -372,7 +368,9 @@ def main():
         total_batches = len(batches)
         start_time = datetime.now()
         
-        for batch_num, batch in enumerate(batches, 1):
+        # Added the missing variable creation:
+        batches = [tickers[i:i + batch_size] for i in range(0, len(tickers), batch_size)]
+        total_batches = len(batches)
             print(f"Processing batch {batch_num}/{total_batches} ({len(batch)} symbols)...")
             
             # Use your existing yf.download logic for now (we can add retry later)
@@ -418,18 +416,7 @@ def main():
 
         if good_dfs:
             df = pd.concat(good_dfs, ignore_index=True)
-            # Check what columns we actually have
-            print("Available columns:", df.columns.tolist())
-            
-            # Try to standardize column selection
-            try:
-                df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
-                print("✅ Column selection successful")
-            except KeyError as e:
-                print(f"❌ Column selection failed: {e}")
-                print("Available columns:", df.columns.tolist())
-                # Use whatever columns we have
-                df = df.reset_index(drop=True)
+            df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
         else:
             print("No data fetched — check your internet connection and ticker list.")
             return
