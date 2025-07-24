@@ -1482,16 +1482,78 @@ def create_user_friendly_stock_selection(unique_symbols):
     symbol_to_name = get_complete_symbol_name_mapping()
     
     st.markdown("---")
-    # Safe Financial Dark Theme with Wine Accents
+    # Ultra-Sleek Financial Theme with Animated Starfield
     st.markdown("""
     <style>
     .stApp {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #533483 75%, #7b2d26 100%) !important;
-        background-size: 400% 400% !important;
-        animation: gradientShift 20s ease infinite !important;
+        background: 
+            radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.15), transparent),
+            radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.1), transparent),
+            radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.1), transparent),
+            radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.1), transparent),
+            radial-gradient(2px 2px at 160px 30px, rgba(255,255,255,0.1), transparent),
+            linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 15%, #16213e 35%, #0f3460 55%, #533483 75%, #7b2d26 95%, #2c1810 100%) !important;
+        background-size: 
+            200px 100px,
+            300px 120px,
+            150px 200px,
+            250px 150px,
+            180px 90px,
+            100% 100% !important;
+        background-attachment: fixed !important;
+        animation: starfieldMove 25s linear infinite, gradientPulse 15s ease-in-out infinite !important;
     }
     
-    @keyframes gradientShift {
+    @keyframes starfieldMove {
+        0% {
+            background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0% 50%;
+        }
+        100% {
+            background-position: 200px 100px, -300px 120px, 150px -200px, -250px 150px, 180px -90px, 100% 50%;
+        }
+    }
+    
+    @keyframes gradientPulse {
+        0%, 100% {
+            background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0% 50%;
+        }
+        50% {
+            background-position: 100px 50px, 150px 60px, 75px 100px, 125px 75px, 90px 45px, 100% 50%;
+        }
+    }
+    
+    /* Enhanced text with subtle glow */
+    .stMarkdown, .stText, p, span {
+        color: #f8f9fa !important;
+        text-shadow: 0 0 10px rgba(248, 249, 250, 0.1) !important;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        color: #ffffff !important;
+        text-shadow: 0 0 15px rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    /* Premium button styling with enhanced gradient */
+    .stButton > button {
+        background: linear-gradient(45deg, 
+            rgba(123, 45, 38, 0.9) 0%, 
+            rgba(83, 52, 131, 0.9) 25%, 
+            rgba(15, 52, 96, 0.9) 50%, 
+            rgba(83, 52, 131, 0.9) 75%, 
+            rgba(123, 45, 38, 0.9) 100%) !important;
+        background-size: 200% 200% !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 10px !important;
+        font-weight: bold !important;
+        box-shadow: 
+            0 4px 15px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+        transition: all 0.4s ease !important;
+        animation: buttonShimmer 3s ease-in-out infinite !important;
+    }
+    
+    @keyframes buttonShimmer {
         0%, 100% {
             background-position: 0% 50%;
         }
@@ -1500,40 +1562,53 @@ def create_user_friendly_stock_selection(unique_symbols):
         }
     }
     
-    /* Text styling */
-    .stMarkdown, .stText, p, span {
+    .stButton > button:hover {
+        background-position: 100% 50% !important;
+        transform: translateY(-2px) scale(1.02) !important;
+        box-shadow: 
+            0 8px 25px rgba(123, 45, 38, 0.4),
+            0 4px 15px rgba(83, 52, 131, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+        border-color: rgba(255, 255, 255, 0.5) !important;
+    }
+    
+    /* Sleek input styling with glow effects */
+    .stSelectbox > div > div,
+    .stTextInput > div > div > input {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 10px !important;
         color: #f8f9fa !important;
-    }
-    
-    h1, h2, h3, h4, h5, h6 {
-        color: #ffffff !important;
-    }
-    
-    /* Button styling */
-    .stButton > button {
-        background: linear-gradient(45deg, rgba(123, 45, 38, 0.8), rgba(83, 52, 131, 0.8)) !important;
-        color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        border-radius: 8px !important;
-        font-weight: bold !important;
+        backdrop-filter: blur(10px) !important;
+        box-shadow: 
+            inset 0 1px 3px rgba(0, 0, 0, 0.2),
+            0 1px 3px rgba(255, 255, 255, 0.1) !important;
         transition: all 0.3s ease !important;
     }
     
-    .stButton > button:hover {
-        background: linear-gradient(45deg, rgba(123, 45, 38, 1), rgba(83, 52, 131, 1)) !important;
-        transform: translateY(-1px) !important;
+    .stSelectbox > div > div:focus,
+    .stTextInput > div > div > input:focus {
+        border-color: rgba(123, 45, 38, 0.7) !important;
+        box-shadow: 
+            0 0 0 3px rgba(123, 45, 38, 0.15),
+            inset 0 1px 3px rgba(0, 0, 0, 0.2),
+            0 1px 8px rgba(123, 45, 38, 0.3) !important;
+        background: rgba(255, 255, 255, 0.12) !important;
     }
     
-    /* Input styling */
-    .stSelectbox > div > div,
-    .stTextInput > div > div > input {
-        background: rgba(255, 255, 255, 0.1) !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        border-radius: 8px !important;
-        color: #f8f9fa !important;
+    /* Enhanced metric containers */
+    div[data-testid="metric-container"] {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
+        backdrop-filter: blur(15px) !important;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
     }
     </style>
     """, unsafe_allow_html=True)
+
     # Create a container specifically for the portfolio section
     st.markdown('<div class="portfolio-section">', unsafe_allow_html=True)
     
