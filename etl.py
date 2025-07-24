@@ -493,6 +493,16 @@ def main():
 
         if good_dfs:
             df = pd.concat(good_dfs, ignore_index=True)
+            print(f"🔍 DEBUG: About to select columns...")
+            print(f"DataFrame shape: {df.shape}")
+            print(f"DataFrame columns: {df.columns}")
+            print(f"DataFrame columns list: {list(df.columns)}")
+            print(f"Column type: {type(df.columns)}")
+            if hasattr(df.columns, 'nlevels'):
+                print(f"MultiIndex levels: {df.columns.nlevels}")
+                if df.columns.nlevels > 1:
+                    print(f"Level 0: {list(df.columns.levels[0])}")  
+                    print(f"Level 1: {list(df.columns.levels[1])}")
             df = df[['symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
         else:
             print("No data fetched — check your internet connection and ticker list.")
