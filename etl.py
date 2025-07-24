@@ -424,22 +424,24 @@ def main():
                     bad_tickers.append(ticker)
                     continue
             
-            # Add delay between batches
-            if batch_num < total_batches:
-                time.sleep(delay_between_batches)
-        
-        print(f"Successfully fetched: {len(good_dfs)} symbols")
-        print(f"Failed to fetch: {len(bad_tickers)} symbols")
-
         if good_dfs:
             print("🔧 Standardizing DataFrame columns before concatenation...")
             standardized_dfs = []
-            expected_columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'symbol', 'Date']
-        
+            
             for i, df_temp in enumerate(good_dfs):
-                # Ensure columns are in consistent order
+                print(f"  DEBUG: DataFrame {i} columns before standardization: {list(df_temp.columns)}")
+                
+                # Flatten MultiIndex columns if they exist
+                if isinstance(df_temp.columns, pd.MultiIndex):
+                    print(f"  🔧 Flattening MultiIndex columns for DataFrame {i}")
+                    # Take only the first level (the actual column names)
+                    df_temp.columns = df_temp.columns.get_level_values(0)
+                
+                # Now standardize column order
+                expected_columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'symbol', 'Date']
                 df_temp = df_temp[expected_columns]
                 standardized_dfs.append(df_temp)
+                print(f"  ✅ DataFrame {i} standardized: {list(df_temp.columns)}")
                 
             df = pd.concat(standardized_dfs, ignore_index=True)
             print(f"✅ Concatenation complete: {df.shape}")
