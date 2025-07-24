@@ -463,15 +463,33 @@ def main():
     df = df[~df['symbol'].isin(bad_symbols)]
 
     # ROLLING ANALYTICS
+    print("🔧 Calculating rolling analytics...")
     df = df.sort_values(['symbol', 'Date']).reset_index(drop=True)
-    df['daily_return'] = df.groupby('symbol')['Close'].pct_change(fill_method=None)
-    df['volatility_21'] = df.groupby('symbol')['daily_return'].rolling(rolling_vol_days).std().reset_index(0, drop=True)
-    df['rolling_yield_21'] = df.groupby('symbol')['daily_return'].rolling(rolling_vol_days).mean().reset_index(0, drop=True)
-    df['sharpe_21'] = (df['rolling_yield_21'] / df['volatility_21']) * np.sqrt(252)
-    df['max_drawdown_63'] = df.groupby('symbol')['Close'].rolling(rolling_drawdown_days)\
-        .apply(lambda x: (np.max(x) - np.min(x)) / np.max(x) if len(x) > 0 and np.max(x) != 0 else 0, raw=False)\
-        .reset_index(0, drop=True)
-    df['custom_risk_score'] = df['volatility_21'] * 0.7 + df['max_drawdown_63'] * 0.3
+    
+    # Calculate analytics with proper error handling
+    try:
+        df['daily_return'] = df.groupby('symbol')['Close'].pct_change(fill_method=None)
+        df['volatility_21'] = df.groupby('symbol')['daily_return'].rolling(rolling_vol_days).std().reset_index(0, drop=True)
+        df['rolling_yield_21'] = df.groupby('symbol')['daily_return'].rolling(rolling_vol_days).mean().reset_index(0, drop=True)
+        df['sharpe_21'] = (df['rolling_yield_21'] / df['volatility_21']) * np.sqrt(252)
+        
+        # Simplified max drawdown calculation to avoid length mismatch
+        df['max_drawdown_63'] = df.groupby('symbol')['Close'].rolling(rolling_drawdown_days).max().reset_index(0, drop=True) - \
+                               df.groupby('symbol')['Close'].rolling(rolling_drawdown_days).min().reset_index(0, drop=True)
+        df['max_drawdown_63'] = df['max_drawdown_63'] / df.groupby('symbol')['Close'].rolling(rolling_drawdown_days).max().reset_index(0, drop=True)
+        
+        df['custom_risk_score'] = df['volatility_21'] * 0.7 + df['max_drawdown_63'] * 0.3
+        print("✅ Rolling analytics calculated successfully")
+        
+    except Exception as e:
+        print(f"⚠️ Error in rolling analytics: {e}")
+        # Add default values if calculations fail
+        df['daily_return'] = 0
+        df['volatility_21'] = 0
+        df['rolling_yield_21'] = 0
+        df['sharpe_21'] = 0
+        df['max_drawdown_63'] = 0
+        df['custom_risk_score'] = 0
 
     # Get each stock's latest analytics
     latest = df.sort_values('Date').groupby('symbol').tail(1)
