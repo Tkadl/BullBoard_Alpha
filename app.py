@@ -1482,62 +1482,59 @@ def create_user_friendly_stock_selection(unique_symbols):
     symbol_to_name = get_complete_symbol_name_mapping()
     
     st.markdown("---")
-    # CSS for background gradient layers
+    # CSS for targeted column backgrounds + subtle page background
     st.markdown("""
     <style>
-    /* Create gradient background layers */
-    .gradient-bg-left::before {
-        content: '';
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: 35%;
-        height: 100vh;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        z-index: -1;
-        border-radius: 15px;
-        margin: 10px;
-        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+    /* Subtle page background */
+    .stApp {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
     }
     
-    .gradient-bg-right::before {
-        content: '';
-        position: fixed;
-        right: 0;
-        top: 0;
-        width: 65%;
-        height: 100vh;
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        z-index: -1;
-        border-radius: 15px;
-        margin: 10px;
-        box-shadow: 0 8px 32px rgba(240, 147, 251, 0.3);
+    /* Target only the specific section where our columns are */
+    .portfolio-section {
+        background: transparent;
+        padding: 20px 0;
     }
     
-    /* Style content to appear above gradients */
-    .stApp > div {
-        position: relative;
-        z-index: 1;
+    /* Left column gradient - contained */
+    .portfolio-section div[data-testid="column"]:nth-of-type(1) {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border-radius: 15px !important;
+        padding: 25px !important;
+        margin-right: 10px !important;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        min-height: 500px !important;
     }
     
-    /* Make text white in left column */
-    div[data-testid="column"]:nth-of-type(1) h3,
-    div[data-testid="column"]:nth-of-type(1) p,
-    div[data-testid="column"]:nth-of-type(1) .stMarkdown {
+    /* Right column gradient - contained */
+    .portfolio-section div[data-testid="column"]:nth-of-type(2) {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+        border-radius: 15px !important;
+        padding: 25px !important;
+        margin-left: 10px !important;
+        box-shadow: 0 8px 32px rgba(240, 147, 251, 0.3) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        min-height: 500px !important;
+    }
+    
+    /* Style text in gradient columns to be white */
+    .portfolio-section div[data-testid="column"]:nth-of-type(1) h3,
+    .portfolio-section div[data-testid="column"]:nth-of-type(1) p,
+    .portfolio-section div[data-testid="column"]:nth-of-type(1) .stMarkdown {
         color: white !important;
         font-weight: bold !important;
     }
     
-    /* Make text white in right column */
-    div[data-testid="column"]:nth-of-type(2) h3,
-    div[data-testid="column"]:nth-of-type(2) p,
-    div[data-testid="column"]:nth-of-type(2) .stMarkdown {
+    .portfolio-section div[data-testid="column"]:nth-of-type(2) h3,
+    .portfolio-section div[data-testid="column"]:nth-of-type(2) p,
+    .portfolio-section div[data-testid="column"]:nth-of-type(2) .stMarkdown {
         color: white !important;
         font-weight: bold !important;
     }
     
-    /* Style buttons to have white backgrounds */
-    .stButton > button {
+    /* Style buttons in gradient columns */
+    .portfolio-section .stButton > button {
         background: rgba(255, 255, 255, 0.9) !important;
         color: #2d3436 !important;
         border: none !important;
@@ -1546,15 +1543,15 @@ def create_user_friendly_stock_selection(unique_symbols):
         box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
     }
     
-    /* Style selectboxes */
-    .stSelectbox > div > div {
+    /* Style selectboxes in gradient columns */
+    .portfolio-section .stSelectbox > div > div {
         background: rgba(255, 255, 255, 0.9) !important;
         border-radius: 8px !important;
         border: none !important;
     }
     
-    /* Style text inputs */
-    .stTextInput > div > div > input {
+    /* Style text inputs in gradient columns */
+    .portfolio-section .stTextInput > div > div > input {
         background: rgba(255, 255, 255, 0.9) !important;
         border-radius: 8px !important;
         border: none !important;
@@ -1563,11 +1560,10 @@ def create_user_friendly_stock_selection(unique_symbols):
     </style>
     """, unsafe_allow_html=True)
     
-    # Add gradient background trigger classes
-    st.markdown('<div class="gradient-bg-left"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="gradient-bg-right"></div>', unsafe_allow_html=True)
+    # Create a container specifically for the portfolio section
+    st.markdown('<div class="portfolio-section">', unsafe_allow_html=True)
     
-    # Now create normal Streamlit columns - they'll appear on top of gradients
+    # Now create normal Streamlit columns - they'll get the gradient styling
     left_col, right_col = st.columns([35, 65], gap="large")
     
     # === LEFT COLUMN: Current Portfolio ===
@@ -1823,6 +1819,9 @@ def create_user_friendly_stock_selection(unique_symbols):
                             st.session_state.stock_basket.append(symbol)
                             st.success(f"Added {symbol}!")
                             st.rerun()
+
+    # Close the portfolio section container
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Return selection
     if st.session_state.stock_basket:
