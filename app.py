@@ -1482,35 +1482,13 @@ def create_user_friendly_stock_selection(unique_symbols):
     symbol_to_name = get_complete_symbol_name_mapping()
     
     st.markdown("---")
-    # Sophisticated Financial Dark Theme with Wine Accents
+    # Safe Financial Dark Theme with Wine Accents
     st.markdown("""
     <style>
     .stApp {
         background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #533483 75%, #7b2d26 100%) !important;
         background-size: 400% 400% !important;
-        animation: gradientShift 15s ease infinite !important;
-        position: relative !important;
-    }
-    
-    .stApp::before {
-        content: '' !important;
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        background-image: 
-            radial-gradient(circle at 20% 50%, rgba(123, 45, 38, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(83, 52, 131, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 80%, rgba(22, 33, 62, 0.1) 0%, transparent 50%),
-            linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.02) 50%, transparent 60%) !important;
-        background-size: 
-            800px 800px,
-            600px 600px, 
-            400px 400px,
-            200px 200px !important;
-        z-index: -1 !important;
-        pointer-events: none !important;
+        animation: gradientShift 20s ease infinite !important;
     }
     
     @keyframes gradientShift {
@@ -1522,68 +1500,40 @@ def create_user_friendly_stock_selection(unique_symbols):
         }
     }
     
-    /* Enhanced text styling */
+    /* Text styling */
     .stMarkdown, .stText, p, span {
         color: #f8f9fa !important;
-        text-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
     }
     
     h1, h2, h3, h4, h5, h6 {
         color: #ffffff !important;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.4) !important;
     }
     
-    /* Style containers and cards with glass effect */
-    .stContainer, div[data-testid="metric-container"] {
-        background: rgba(255, 255, 255, 0.05) !important;
-        backdrop-filter: blur(10px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 12px !important;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-    }
-    
-    /* Enhanced button styling */
+    /* Button styling */
     .stButton > button {
         background: linear-gradient(45deg, rgba(123, 45, 38, 0.8), rgba(83, 52, 131, 0.8)) !important;
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 8px !important;
         font-weight: bold !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
-        backdrop-filter: blur(10px) !important;
         transition: all 0.3s ease !important;
     }
     
     .stButton > button:hover {
         background: linear-gradient(45deg, rgba(123, 45, 38, 1), rgba(83, 52, 131, 1)) !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+        transform: translateY(-1px) !important;
     }
     
-    /* Enhanced selectbox and input styling */
+    /* Input styling */
     .stSelectbox > div > div,
     .stTextInput > div > div > input {
         background: rgba(255, 255, 255, 0.1) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 8px !important;
         color: #f8f9fa !important;
-        backdrop-filter: blur(10px) !important;
-    }
-    
-    .stSelectbox > div > div:focus,
-    .stTextInput > div > div > input:focus {
-        border-color: rgba(123, 45, 38, 0.6) !important;
-        box-shadow: 0 0 0 2px rgba(123, 45, 38, 0.2) !important;
-    }
-    
-    /* Sidebar styling */
-    .css-1d391kg {
-        background: rgba(26, 26, 46, 0.9) !important;
-        backdrop-filter: blur(10px) !important;
     }
     </style>
     """, unsafe_allow_html=True)
-        
     # Create a container specifically for the portfolio section
     st.markdown('<div class="portfolio-section">', unsafe_allow_html=True)
     
