@@ -160,15 +160,20 @@ def main():
             
     
             # Process each ticker individually (Stack Overflow single ticker approach)
-            for ticker in batch:
+            success_count = 0
+            for ticker_idx, ticker in enumerate(batch):
                 try:
-                    print(f"  Downloading {ticker}...")
+                    # Only print progress every 25 stocks or at key points
+                    if ticker_idx % 25 == 0 or ticker_idx == len(batch) - 1:
+                        print(f"  Progress: {ticker_idx + 1}/{len(batch)} stocks (current: {ticker})")
+                    
                     # Download single ticker without group_by - creates simple columns
                     data = yf.download(ticker, start=start_date, end=end_date, 
                                       auto_adjust=True, prepost=True, threads=True)
                     
                     if data.empty or len(data) < min_days_needed:
-                        print(f"  ⚠️ Insufficient data for {ticker}: {len(data)} rows")
+                        if ticker_idx % 50 == 0:  # Only log insufficient data occasionally
+                            print(f"  ⚠️ Insufficient data for {ticker}: {len(data)} rows")
                         bad_tickers.append(ticker)
                         continue
                         
@@ -176,36 +181,45 @@ def main():
                     data['symbol'] = ticker
                     data['Date'] = data.index
                     good_dfs.append(data.reset_index(drop=True))
-                    print(f"  ✅ {ticker}: {len(data)} rows added")
+                    success_count += 1
+                    
+                    # Show successful downloads occasionally
+                    if success_count % 50 == 0:
+                        print(f"  ✅ Milestone: {success_count} stocks successfully downloaded ({ticker}: {len(data)} rows)")
                     
                 except Exception as e:
-                    print(f"  ❌ Error downloading {ticker}: {e}")
+                    print(f"  ❌ Error downloading {ticker}: {e}")  # Keep errors - they're important!
                     bad_tickers.append(ticker)
                     continue
             
+            # Summary at the end
+            print(f"  📊 Batch complete: {success_count} successful, {len(bad_tickers)} failed")
+            
         if good_dfs:
-            print("🔧 Standardizing DataFrame columns before concatenation...")
+            print(f"🔧 Standardizing {len(good_dfs)} DataFrames...")
             standardized_dfs = []
+            multiindex_count = 0
             
             for i, df_temp in enumerate(good_dfs):
-                print(f"  DEBUG: DataFrame {i} columns before standardization: {list(df_temp.columns)}")
+                # Show progress every 100 symbols (for S&P 500)
+                if len(good_dfs) > 50 and (i % 100 == 0 or i == len(good_dfs) - 1):
+                    print(f"  Progress: {i+1}/{len(good_dfs)} DataFrames processed...")
                 
                 # Flatten MultiIndex columns if they exist
                 if isinstance(df_temp.columns, pd.MultiIndex):
-                    print(f"  🔧 Flattening MultiIndex columns for DataFrame {i}")
-                    # Take only the first level (the actual column names)
                     df_temp.columns = df_temp.columns.get_level_values(0)
+                    multiindex_count += 1
                 
                 # Standardize column order
                 expected_columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'symbol', 'Date']
                 df_temp = df_temp[expected_columns]
                 standardized_dfs.append(df_temp)
-                print(f"  ✅ DataFrame {i} standardized: {list(df_temp.columns)}")
-                
+            
+            print(f"  ✅ All {len(good_dfs)} DataFrames processed ({multiindex_count} required MultiIndex flattening)")
+            
             df = pd.concat(standardized_dfs, ignore_index=True)
             print(f"✅ Concatenation complete: {df.shape}")
             print(f"✅ Final columns: {list(df.columns)}")
-            print(f"✅ Column type: {type(df.columns)}")
         else:
             print("No data fetched — check your internet connection and ticker list.")
             return
