@@ -12,3 +12,17 @@ bullboard_alpha/
 │   └── utils.py        # Helper functions
 ├── config/             # Configuration management
 └── requirements.txt
+
+## Technical Stack
+- Frontend: Streamlit
+- Data Source: Yahoo Finance (yfinance)
+- Analytics: Pandas, NumPy
+- Visualization: Plotly
+
+## Architecture
+The ETL pipeline follows a modular design:
+
+- Data Fetcher: Handles yfinance API calls with retry logic
+- Data Processor: Calculates rolling analytics and risk metrics
+- Validators: Ensures data quality and detects anomalies
+- Utils: Market-aware date handling and helper functions
