@@ -1887,8 +1887,8 @@ def main():
         # ETL Pipeline Button
     if st.button("🔄 Refresh Data", key="etl_button"):
         with st.spinner("🔄 Fetching latest market data... This may take 1-2 minutes."):
-            import etl
-            etl.main()
+            from etl import main
+            main()
         st.success("✅ Data updated successfully!")
         st.rerun()
 
