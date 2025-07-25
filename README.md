@@ -1,7 +1,7 @@
 # BullBoard - Professional Stock Analytics Platform
 
 ## Project Structure
-
+```
 bullboard_alpha/
 ├── app.py              # Streamlit web application
 ├── etl/                # ETL pipeline package
@@ -12,7 +12,7 @@ bullboard_alpha/
 │   └── utils.py        # Helper functions
 ├── config/             # Configuration management
 └── requirements.txt
-
+```
 ## Technical Stack
 - Frontend: Streamlit
 - Data Source: Yahoo Finance (yfinance)
