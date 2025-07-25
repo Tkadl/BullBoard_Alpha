@@ -51,7 +51,7 @@ def fetch_incremental_data(tickers, last_date, end_date, min_days_needed, batch_
     good_dfs = []
     bad_tickers = []
     
-    # Use same batch processing logic as your current code
+    # Use same batch processing logic as current code
     total_batches = (len(tickers) + batch_size - 1) // batch_size
     
     for batch_num, i in enumerate(range(0, len(tickers), batch_size), 1):
