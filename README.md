@@ -5,11 +5,11 @@
 bullboard_alpha/
 ├── app.py              # Streamlit web application
 ├── etl/                # ETL pipeline package
+│   ├── __init__.py     # Python package configuration
 │   ├── main.py         # Main orchestration
 │   ├── data_fetcher.py # Stock data downloading
 │   ├── validators.py   # Data quality checks
 │   └── utils.py        # Helper functions
-├── config/             # Configuration management
 └── requirements.txt
 ```
 ## Technical Stack
