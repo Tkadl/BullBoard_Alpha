@@ -43,7 +43,7 @@ def get_market_aware_dates():
         
     except Exception as e:
         print(f"⚠️ Error in market date calculation, falling back to simple dates: {e}")
-        # Fallback to your existing logic
+        # Fallback to existing logic
         from datetime import date
         start_date = "2024-01-01"
         end_date = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")  # Use yesterday
@@ -92,7 +92,7 @@ def should_do_incremental_update(last_date, existing_symbols, current_tickers):
 
 def get_sp500_symbols():
     """Get complete S&P 500 symbols list"""
-    print("DEBUG: get_sp500_symbols() function called!")  # Add this line
+    print("DEBUG: get_sp500_symbols() function called!")
     sp500_symbols = [
         'A', 'AAL', 'AAP', 'AAPL', 'ABBV', 'ABC', 'ABT', 'ACN', 'ADBE', 'ADI', 'ADM', 'ADP', 'ADSK', 'AEE', 'AEP', 'AES', 'AFL', 'AIG', 'AIZ', 'AJG', 'AKAM', 'ALB', 'ALGN', 'ALK', 'ALL', 'ALLE', 'AMAT', 'AMCR', 'AMD', 'AME', 'AMGN', 'AMP', 'AMT', 'AMZN', 'ANET', 'ANSS', 'AON', 'AOS', 'APA', 'APD', 'APH', 'APTV', 'ARE', 'ATO', 'AVB', 'AVGO', 'AVY', 'AWK', 'AXP', 'AZO',
         'BA', 'BAC', 'BALL', 'BAX', 'BBWI', 'BBY', 'BDX', 'BEN', 'BF-B', 'BIIB', 'BIO', 'BK', 'BKNG', 'BKR', 'BLK', 'BMY', 'BR', 'BRK-B', 'BRO', 'BSX', 'BWA',
