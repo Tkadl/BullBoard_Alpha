@@ -20,7 +20,7 @@ Usage:
 """
 
 __version__ = "1.0.0"
-__author__ = "BullBoard Team"
+__author__ = "Tkadl"
 
 # Import main function for easy access
 from .main import main
