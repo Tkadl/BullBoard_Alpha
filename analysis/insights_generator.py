@@ -81,4 +81,27 @@ def generate_comprehensive_analysis(symbol, data, portfolio_context):
     risk_category = "high-risk" if volatility > 0.08 else "moderate-risk" if volatility > 0.05 else "low-risk"
     return_category = "strong gains" if total_return > 0.15 else "moderate gains" if total_return > 0.05 else "modest gains" if total_return > 0 else "negative returns"
     
-    insights.append(f"📋 **Profile**: {
+    insights.append(f"📋 **Profile**: {symbol} is a {risk_category} stock showing {return_category} over your selected timeframe")
+    
+    return insights
+
+
+def generate_market_regime_insights(summary_data):
+    """Generate market regime analysis"""
+    regime = detect_market_regime(summary_data)
+    insights = []
+    
+    insights.append(f"🌐 **Market Regime**: {regime['regime']} detected with {regime['confidence'].lower()} confidence")
+    insights.append(f"📊 **Regime Details**: {regime['description']} - {regime['characteristics']}")
+    
+    # Regime-specific insights
+    if regime['regime'] == 'Bull Market':
+        insights.append("💡 **Market Context**: Favorable conditions for growth-oriented strategies")
+    elif regime['regime'] == 'Bear Market':
+        insights.append("💡 **Market Context**: Defensive positioning and risk management priority")
+    elif regime['regime'] == 'High Volatility':
+        insights.append("💡 **Market Context**: Consider reduced position sizes and increased monitoring")
+    else:
+        insights.append("💡 **Market Context**: Mixed environment suggests selective, balanced approach")
+    
+    return insights
