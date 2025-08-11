@@ -42,6 +42,13 @@ from analysis import (
     generate_portfolio_optimization_insights
 )
 
+from visualization.charts import (
+    create_risk_return_scatter,
+    create_performance_chart,
+    create_portfolio_metrics_chart,
+    create_correlation_heatmap
+)
+
 # Page configuration
 st.set_page_config(
     page_title="BullBoard - Advanced Stock Analytics",
